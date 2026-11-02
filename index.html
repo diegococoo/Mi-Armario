@@ -691,13 +691,24 @@ const CU_TYPES={
  botin:{v:'s',n:'Botín',sk:'boot',fz:2,season:'fresco'},
  alpargata:{v:'s',n:'Alpargatas',sk:'esp',fz:2,season:'verano'},
  sandalia:{v:'s',n:'Sandalias',sk:'sandal',fz:1,season:'verano'},
- calcetin:{v:'k',n:'Calcetines',fz:2,season:'all'}
+ calcetin:{v:'k',n:'Calcetines',fz:2,season:'all'},
+ cinturon:{v:'w',n:'Cinturón',fz:2,season:'all',k:'leather'},
+ cinturontr:{v:'w',n:'Cinturón trenzado o de tela',fz:1,season:'all',k:'braid'}
 };
 const PALETTE=[['blanco','#F6F5F1','Blanco'],['crema','#EDE3CC','Crema'],['beige','#D5CBB9','Beige'],['camel','#A6722F','Camel'],['marron','#5A3B28','Marrón'],
  ['negro','#1B1C1F','Negro'],['antracita','#3A3D44','Antracita'],['gris','#9C9EA3','Gris'],['marino','#1F2A47','Marino'],['denim','#24375C','Vaquero oscuro'],['denimclaro','#8EB1D5','Vaquero claro'],
  ['azulclaro','#BCD3EE','Azul claro'],['azul','#3D63A3','Azul'],['indigo','#6F78D9','Índigo'],['petroleo','#1F4A5E','Petróleo'],['verde','#24452F','Verde botella'],['oliva','#5C6340','Verde oliva'],
  ['salvia','#7E9E9A','Salvia'],['menta','#B9D3C2','Menta'],['burdeos','#6E1F2D','Burdeos'],['rojo','#B0302B','Rojo'],['coral','#D2584B','Coral'],['rosa','#EBC2BC','Rosa'],['lila','#C9C3E6','Lila'],['malva','#7F6A72','Malva'],['mostaza','#C99A2E','Mostaza']];
 const PALC=Object.fromEntries(PALETTE.map(([f,c])=>[f,c]));
+/* ---------- Cinturones ---------- */
+const BE={
+ beAnte:{n:'Cinturón de ante camel con pespunte',c:'#B07A45',fam:'camel',fz:1,k:'suede',stitch:1},
+ beCuero:{n:'Cinturón de piel marrón envejecido',c:'#6B3A22',fam:'marron',fz:1,k:'leather'},
+ beNegro:{n:'Cinturón negro grabado (reversible verde)',c:'#1C1C1F',fam:'negro',fz:3,k:'leather',buckle:'#C9CCD1',tex:1},
+ beTrenz:{n:'Cinturón trenzado marino con bandera de España',c:'#1F2A55',fam:'marino',fz:1,k:'braid',p:['#C8302B','#E5C437']},
+ beMarron:{n:'Cinturón de piel marrón oscuro',c:'#3E2A20',fam:'marron',fz:3,k:'leather',buckle:'#C9CCD1'},
+ none:{n:'Sin cinturón',c:'#E8EAF0',fam:null,fz:2,k:'none'}
+};
 const FIXEDCU={
  v_linoBl:{type:'lino',fam:'blanco',c:'#F4F1E8',n:'Pantalón de lino blanco'},
  v_linoBe:{type:'lino',fam:'beige',c:'#DDD3BE',n:'Pantalón de lino beige'},
@@ -727,13 +738,13 @@ const VESTS=['chalVerde','chalPC','chalMon'];
 const DRESSCOATS=['gaban','gabardina'];
 const SUMMERSH=['espMar','espBeige','espOliva','zueco','nwAzul'];
 const SHOES2=['anteMarron','anteMarino','nauticos','mocasin','oxford','oxfordNeg',...SUMMERSH,'botines','blazer','sl72','spNeg','gazelle','spGris','superga','nb327','nb2002','vomero','nikeGris'];
-const BASEDOM={p:PANTS.slice(),b:[...TEES,...POLOS,...SHIRTS],m:[...HOODS,'hAbercrombie',...SWEATS,'sudSolera','sudMakarthy',...KNITS,...ZIPS,...JACKS,...PSHIRTS],c:[...COATS,'napa',...DRESSCOATS,...MIDSEASON,...VESTS],s:SHOES2,k:Object.keys(SK)};
+const BASEDOM={p:PANTS.slice(),b:[...TEES,...POLOS,...SHIRTS],m:[...HOODS,'hAbercrombie',...SWEATS,'sudSolera','sudMakarthy',...KNITS,...ZIPS,...JACKS,...PSHIRTS],c:[...COATS,'napa',...DRESSCOATS,...MIDSEASON,...VESTS],s:SHOES2,k:Object.keys(SK),w:Object.keys(BE)};
 let DOM={};
-const VNAME={p:'Pantalón',b:'Camiseta, polo o camisa',m:'Sudadera, jersey o cremallera',c:'Abrigo o chaleco',s:'Calzado',k:'Calcetín'};
+const VNAME={p:'Pantalón',b:'Camiseta, polo o camisa',m:'Sudadera, jersey o cremallera',c:'Abrigo o chaleco',s:'Calzado',k:'Calcetín',w:'Cinturón'};
 const MODES=[
- {id:'base',n:'Solo base',d:'Camiseta, polo o camisa',vars:['p','b','s','k']},
- {id:'capa',n:'Con capa',d:'+ sudadera, jersey o cremallera',vars:['p','b','m','s','k']},
- {id:'abrigo',n:'Con abrigo',d:'+ capa + abrigo o chaleco',vars:['p','b','m','c','s','k']}
+ {id:'base',n:'Solo base',d:'Camiseta, polo o camisa',vars:['p','b','s','k','w']},
+ {id:'capa',n:'Con capa',d:'+ sudadera, jersey o cremallera',vars:['p','b','m','s','k','w']},
+ {id:'abrigo',n:'Con abrigo',d:'+ capa + abrigo o chaleco',vars:['p','b','m','c','s','k','w']}
 ];
 
 /* ---------- Temporada, ocasión y tiempo ---------- */
@@ -769,6 +780,7 @@ function info(v,id){
  if(v==='m')return T[id]||NM[id];
  if(v==='c')return CO[id];
  if(v==='s')return S[id];
+ if(v==='w')return BE[id];
  return SK[id];
 }
 function famOf(v,id){
@@ -777,6 +789,7 @@ function famOf(v,id){
  if(v==='c')return CO[id].fam;
  if(v==='p')return PFAM[id];
  if(v==='s')return SFAM[id];
+ if(v==='w')return BE[id].fam;
  return KFAM[id];
 }
 function topType(v,id){if(isCU(id))return CU[id].t;if(SH[id])return 'shirt';const o=T[id]||NM[id];return o.t;}
@@ -790,7 +803,7 @@ function fzTop(v,id){
 const SHOEFZ={nb327:1,nb2002:1,vomero:1,nikeGris:1,oxfordNeg:3,espMar:2,espBeige:2,espOliva:2,zueco:1,nwAzul:2,sl72:2,spNeg:2,gazelle:2,spGris:2,superga:2,blazer:2,anteMarron:2,anteMarino:2,nauticos:2,botines:2,mocasin:3,oxford:3};
 const shoeFz=s=>isCU(s)?CU[s].fz:SHOEFZ[s];
 const pantFz=p=>isCU(p)?CU[p].fz:PANTFZ[p];
-function fzOf(v,id){if(v==='p')return pantFz(id);if(v==='s')return shoeFz(id);if(v==='k')return 2;return fzTop(v,id);}
+function fzOf(v,id){if(v==='w')return isCU(id)?CU[id].fz:BE[id].fz;if(v==='p')return pantFz(id);if(v==='s')return shoeFz(id);if(v==='k')return 2;return fzTop(v,id);}
 Object.assign(SHOEK,{oxfordNeg:'formal',mocasin:'formal',oxford:'formal',botines:'boot',blazer:'terr'});
 const kindOf=s=>isCU(s)?CU[s].sk:S[s].k;
 const SUMMERSHOE=s=>['esp','esploafer','sandal'].includes(kindOf(s));
@@ -882,6 +895,27 @@ function pantSock(p,k){
  if(['marino','negro'].includes(kf)&&['marino','negro','denim'].includes(pf))return false;
  return true;
 }
+const BROWNISH=new Set(['marron','camel','burdeos','oliva','beige','crema']);
+function shoeTone(s){const f=famOf('s',s);const k=kindOf(s);if(f==='negro')return 'negro';if(['marron','camel','burdeos'].includes(f))return 'marron';return k==='run'||k==='terr'||k==='canvas'||k==='hi'?'libre':'otro';}
+function beltTone(w){const f=famOf('w',w);if(f==='negro')return 'negro';if(['marron','camel','burdeos'].includes(f))return 'marron';return 'otro';}
+function beltShoe(w,s){
+ if(w==='none')return true;
+ const bt=beltTone(w),st=shoeTone(s),sfz=shoeFz(s),wfz=fzOf('w',w);
+ if(sfz>=3&&wfz<=1)return false;
+ if(bt==='negro'&&st==='marron'&&sfz>=2&&!['run','terr','canvas','hi'].includes(kindOf(s)))return false;
+ if(bt==='marron'&&st==='negro'&&sfz>=3)return false;
+ if(bt==='negro'&&SUMMERSHOE(s))return false;
+ return true;
+}
+function beltPant(p,w){
+ if(w==='none')return true;
+ const wfz=fzOf('w',w),pfz=pantFz(p);
+ if(DRESSP.has(p)&&wfz<=1)return false;
+ if(Math.abs(wfz-pfz)>1)return false;
+ const pf=famOf('p',p),wf=famOf('w',w);if(pf&&wf&&pf===wf&&ACC.has(pf))return false;
+ if(pf==='negro'&&wf==='negro')return true;
+ return true;
+}
 function pair(va,a,vb,b){
  switch(va+vb){
   case 'pb':case 'pm':return pantTop(a,vb,b);
@@ -902,10 +936,14 @@ function pair(va,a,vb,b){
   case 'cs':return Math.abs(fzTop('c',a)-shoeFz(b))<=1&&!SUMMERSHOE(b);
   case 'ck':return b!=='none';
   case 'sk':return sockShoe(a,b);
+  case 'pw':return beltPant(a,b);
+  case 'sw':return beltShoe(b,a);
+  case 'bw':return !(b!=='none'&&fzOf('w',b)>=3&&fzTop('b',a)<=1);
+  case 'mw':return !(b!=='none'&&fzOf('w',b)>=3&&topType('m',a)==='hoodie');
  }
  return true;
 }
-const ORDER=['p','b','m','c','s','k'];
+const ORDER=['p','b','m','c','s','k','w'];
 let PM={};
 function rebuild(){
  DOM={};ORDER.forEach(v=>{DOM[v]=[...BASEDOM[v],...Object.keys(CU).filter(id=>CU[id].v===v)].filter(id=>!(typeof store!=='undefined'&&isHidden(id)));});
@@ -1141,8 +1179,18 @@ function figure(o,vars,ghost){
  s+=o.b?baseSVG(o.b):g('b');
  if(has('m')){s+=o.m?midSVG(o.m):g('m');if(o.m&&o.b)s+=peek(o.b,o.m);}
  if(has('c'))s+=o.c?coatSVG(o.c):g('c');
+ if(has('w')&&o.w&&o.w!=='none'&&o.p&&!has('c')){const tm=has('m')&&o.m?topType('m',o.m):null;const tb=o.b?topType('b',o.b):null;if(!tm&&(tb==='shirt'||tb==='polo'))s+=beltDraw(o.w,55,134,90);}
  s+=o.s?shoe2(o.s):g('s');
  return `<svg viewBox="0 -16 200 318" role="img" aria-label="Conjunto">${s}</svg>`;
+}
+function beltDraw(id,x0,y0,w){
+ const o=info('w',id);if(!o||o.k==='none')return '';
+ const c=o.c,sh=shade(c,-.25);let s=`<rect x="${x0}" y="${y0}" width="${w}" height="9" rx="1.5" fill="${c}" ${ST}/>`;
+ if(o.k==='braid'){for(let x=x0+2;x<x0+w-2;x+=5){s+=`<path d="M${x},${y0+1} l3,7" stroke="${sh}" stroke-width="1.4"/>`;}(o.p||[]).forEach((pc,i)=>{for(let x=x0+4+i*2.5;x<x0+w-3;x+=10){s+=`<path d="M${x},${y0+1} l3,7" stroke="${pc}" stroke-width="1.2"/>`;}});}
+ if(o.stitch)s+=`<path d="M${x0+2},${y0+2} H${x0+w-2} M${x0+2},${y0+7} H${x0+w-2}" stroke="#F4EFE6" stroke-width=".6" stroke-dasharray="2 1.5"/>`;
+ if(o.tex)for(let x=x0+3;x<x0+w-3;x+=3)s+=`<path d="M${x},${y0+2} v5" stroke="#3A3A40" stroke-width=".5"/>`;
+ const bx=x0+w/2-7;s+=`<rect x="${bx}" y="${y0-1.5}" width="14" height="12" rx="2" fill="none" stroke="${o.buckle||'#9C9A94'}" stroke-width="2"/>`;
+ return s;
 }
 const UNDER=topSVG({t:'tee',c:'#D9DCE3'});
 const photoSrc=id=>{const d=(isCU(id)&&CU[id])||(typeof store!=='undefined'&&store.edits[id])||null;if(!d)return null;if(d.photoData)return d.photoData;if(d.photo)return '/_blob/'+d.photo;return null;};
@@ -1153,10 +1201,11 @@ const thumb0={
  m:id=>`<svg viewBox="8 -12 184 152" aria-hidden="true">${UNDER}${midSVG(id)}</svg>`,
  c:id=>`<svg viewBox="2 -16 196 ${info('c',id).k==='long'?228:192}" aria-hidden="true">${UNDER}${coatSVG(id)}</svg>`,
  s:id=>`<svg viewBox="50 240 100 62" aria-hidden="true">${shoe2(id)}</svg>`,
+ w:id=>id==='none'?`<svg viewBox="0 0 120 40" aria-hidden="true"><text x="60" y="25" text-anchor="middle" font-size="11" fill="#8A90A0" font-family="Arial">sin cinturón</text></svg>`:`<svg viewBox="0 0 120 40" aria-hidden="true">${beltDraw(id,4,14,112)}</svg>`,
  k:id=>id==='none'?`<svg viewBox="58 246 84 28" aria-hidden="true"><rect x="64" y="248" width="24" height="24" fill="${SKIN}"/><rect x="112" y="248" width="24" height="24" fill="${SKIN}"/></svg>`:`<svg viewBox="58 246 84 28" aria-hidden="true">${sock2(id)}</svg>`
 };
 
-const thumb={};['p','b','m','c','s','k'].forEach(v=>{thumb[v]=id=>photoOf(id)||thumb0[v](id);});
+const thumb={};['p','b','m','c','s','k','w'].forEach(v=>{thumb[v]=id=>photoOf(id)||thumb0[v](id);});
 
 /* ---------- Bandejas ---------- */
 function groupsOf(v){
@@ -1167,7 +1216,8 @@ function groupsOf(v){
   m:[['Sudaderas con capucha',[...HOODS,'hAbercrombie',...cu(['capucha'])]],['Sudaderas y polos-sudadera',[...SWEATS,'sudSolera','sudMakarthy',...cu(['sudadera'])]],['Jerséis de punto',[...KNITS,...cu(['jersey'])]],['Media cremallera',[...ZIPS,...cu(['cremallera'])]],['Chaquetas de punto',JACKS],['Camisas y polos de manga larga',PSHIRTS]],
   c:[['Abrigos',[...COATS,'napa',...cu(['abrigo','acolchada'])]],['Abrigos de vestir',[...DRESSCOATS,...cu(['abrigovestir'])]],['Entretiempo',[...MIDSEASON,...cu(['cazadora'])]],['Chalecos',[...VESTS,...cu(['chaleco'])]]],
   s:[['Zapatos',['anteMarron','anteMarino','nauticos','mocasin','oxford','oxfordNeg',...cu(['zapato','mocasines'])]],['Botines y caña alta',['botines','blazer',...cu(['botin'])]],['Terraza y lona',['sl72','spNeg','gazelle','spGris','superga',...cu(['zapatilla'])]],['Running',['nb327','nb2002','vomero','nikeGris',...cu(['running'])]],['Verano',[...SUMMERSH,...cu(['alpargata','sandalia'])]]],
-  k:[['Tus calcetines',[...Object.keys(SK),...cu(['calcetin'])]]]
+  k:[['Tus calcetines',[...Object.keys(SK),...cu(['calcetin'])]]],
+  w:[['Piel',['beMarron','beNegro','beCuero','beAnte',...cu(['cinturon'])]],['Trenzados y de tela',['beTrenz',...cu(['cinturontr'])]],['Sin cinturón',['none']]]
  };
  return G0[v].filter(([,ids])=>ids.length);
 }
@@ -1215,9 +1265,9 @@ function scoreOf(o,vars,opts){
   else add(-12,'Demasiados colores fuertes');
  }
  let pb=0,best='';
- for(let i=0;i<cloth.length;i++)for(let j=i+1;j<cloth.length;j++){const b=pairBonus(cloth[i].f,cloth[j].f);if(b>pb){pb=b;best=cloth[i].f+' y '+cloth[j].f;}}
+ for(let i=0;i<cloth.length;i++)for(let j=i+1;j<cloth.length;j++){const b=pairBonus(cloth[i].f,cloth[j].f);if(b>pb){pb=b;best=famName(cloth[i].f).toLowerCase()+' y '+famName(cloth[j].f).toLowerCase();}}
  const pairSum=Math.min(8,cloth.reduce((a,x,i)=>a+cloth.slice(i+1).reduce((b,y)=>b+pairBonus(x.f,y.f),0),0));
- if(pairSum)add(pairSum,`Combinación clásica (${best.replace('denimclaro','vaquero claro').replace('denim','vaquero')})`);
+ if(pairSum)add(pairSum,`Combinación clásica (${best})`);
  const all=[...cloth.map(x=>x.f),shoeF].filter(Boolean);
  if(all.filter(f=>EARTH.has(f)).length>=3&&!all.some(f=>COLD.has(f)))add(7,'Paleta de tierras coherente');
  const outer=cloth.filter(x=>x.v!=='p').pop();
@@ -1258,6 +1308,8 @@ function scoreOf(o,vars,opts){
   if(cf==='beige'&&inner.some(x=>['marino','burdeos','verde','oliva'].includes(x.f)))add(4,'La cazadora beige resalta lo de debajo');
   const dark=[info('c',o.c).c,...inner.map(x=>x.c),has('p')?info('p',o.p).c:null].filter(Boolean).every(c=>lum(c)<.06);
   if(dark)add(-5,'Todo muy oscuro, sin un punto de luz');}
+ if(has('w')&&o.w!=='none'&&has('s')){const bt=beltTone(o.w),st=shoeTone(o.s);if(bt!=='otro'&&bt===st)add(4,'Cinturón a juego con el zapato');else if(o.w==='beTrenz'&&!SUMMERSHOE(o.s)&&shoeFz(o.s)<=2)add(2,'Cinturón trenzado, toque informal');}
+ if(has('w')&&o.w==='none'&&has('p')&&(DRESSP.has(o.p)||pantFz(o.p)>=2)&&has('b')&&['shirt','polo'].includes(topType('b',o.b))&&!has('m'))add(-3,'Con camisa o polo por dentro pide cinturón');
  let nm=0;if(has('p')&&famOf('p',o.p)==='marino')nm++;['b','m','c'].forEach(v=>{if(has(v)&&famOf(v,o[v])==='marino')nm++;});
  if(nm===2)add(-2,'Bastante azul marino');
  /* ocasión */
@@ -1304,6 +1356,7 @@ function getBase(id){
  if(SK[id])return {n:SK[id].n,c:SK[id].c,fam:KFAM[id]};
  if(P[id])return {n:P[id].n,c:P[id].c,fam:PFAM[id]};
  if(S[id])return {n:S[id].n,c:S[id].c,fam:SFAM[id]};
+ if(BE[id]&&id!=='none')return {n:BE[id].n,c:BE[id].c,fam:BE[id].fam};
  return null;
 }
 function setBase(id,o){
@@ -1311,7 +1364,8 @@ function setBase(id,o){
  const box=SH[id]||NM[id]||CO[id];if(box){box.n=o.n;box.c=o.c;box.fam=o.fam;return;}
  if(SK[id]){SK[id].n=o.n;SK[id].c=o.c;KFAM[id]=o.fam;return;}
  if(P[id]){P[id]=Object.assign({},P[id],{n:o.n,c:o.c});PFAM[id]=o.fam;return;}
- if(S[id]){S[id]=Object.assign({},S[id],{n:o.n,c:o.c});SFAM[id]=o.fam;}
+ if(S[id]){S[id]=Object.assign({},S[id],{n:o.n,c:o.c});SFAM[id]=o.fam;return;}
+ if(BE[id]){BE[id].n=o.n;BE[id].c=o.c;BE[id].fam=o.fam;}
 }
 function applyEdits(){
  if(!ORIG){ORIG={};ORDER.forEach(v=>BASEDOM[v].forEach(id=>{const b=getBase(id);if(b)ORIG[id]=b;}));}
@@ -1379,7 +1433,7 @@ async function initStore(){
 }
 
 /* ---------- Estado ---------- */
-let sel={p:null,b:null,m:null,c:null,s:null,k:null};
+let sel={p:null,b:null,m:null,c:null,s:null,k:null,w:null};
 let mode=1,view='probador',showOff={},dayInfo=null;
 try{const v=JSON.parse(localStorage.getItem('probador3')||'null');if(v){if(typeof v.mode==='number')mode=v.mode;if(v.showOff)showOff=v.showOff;const W0=Array.isArray(v.wx)?v.wx:(v.wx&&v.wx!=='any'?[v.wx]:[]);W0.forEach(w=>{if(WX[w]&&w!=='any')wxs.add(w)});const O0=Array.isArray(v.occ)?v.occ:(v.occ&&v.occ!=='any'?[v.occ]:[]);O0.forEach(k=>{if(OCS[k]&&k!=='any')occs.add(k)});}}catch(e){}
 const save=()=>{try{localStorage.setItem('probador3',JSON.stringify({mode,showOff,wx:wxList(),occ:occList()}))}catch(e){}};
@@ -1477,7 +1531,7 @@ function renderHist(){
 }
 
 /* ---------- Render: estadísticas ---------- */
-const PARTNERS={p:['b','s','k'],b:['p','m','s','k'],m:['p','b','s','k'],c:['p','m','s'],s:['p','b','k'],k:['p','b','s']};
+const PARTNERS={w:['p','s'],p:['b','s','k'],b:['p','m','s','k'],m:['p','b','s','k'],c:['p','m','s'],s:['p','b','k'],k:['p','b','s']};
 function renderStats(){
  const el=document.getElementById('v-stats');
  const items=[];ORDER.forEach(v=>DOM[v].forEach(id=>items.push([v,id])));
@@ -1511,7 +1565,7 @@ let addDraft={type:'cargo',fam:'oliva',n:''};
 function cuPreview(d){const T0=CU_TYPES[d.type],o=Object.assign({},T0,{type:d.type,c:d.c||PALC[d.fam],fam:d.fam,n:d.n});const tmp='u_preview';CU[tmp]=o;let s='';try{s=thumb0[T0.v](tmp);}finally{delete CU[tmp];}return s;}
 function renderAdd(){
  const el=document.getElementById('v-add');
- const groups=[['Pantalones',['vaquero','chino','vestir','cargo','lino','bermuda']],['Camisetas, polos y camisas',['camiseta','polo','camisa','camisalino']],['Capas',['sudadera','capucha','jersey','cremallera']],['Abrigos',['abrigo','abrigovestir','acolchada','cazadora','chaleco']],['Calzado',['zapatilla','running','zapato','mocasines','botin','alpargata','sandalia']],['Calcetines',['calcetin']]];
+ const groups=[['Pantalones',['vaquero','chino','vestir','cargo','lino','bermuda']],['Camisetas, polos y camisas',['camiseta','polo','camisa','camisalino']],['Capas',['sudadera','capucha','jersey','cremallera']],['Abrigos',['abrigo','abrigovestir','acolchada','cazadora','chaleco']],['Calzado',['zapatilla','running','zapato','mocasines','botin','alpargata','sandalia']],['Calcetines',['calcetin']],['Cinturones',['cinturon','cinturontr']]];
  const mine=Object.entries(store.custom);
  el.innerHTML=`<div class="vh"><h2>Mi armario</h2><p>Añade lo que compres, edita lo que tienes y retira lo que ya no uses</p></div>
  ${photoHTML()}
@@ -1645,7 +1699,7 @@ async function savePhotoItems(){
  ph={st:'idle',items:[]};renderAdd();
  toast(`${ok} ${ok===1?'prenda añadida':'prendas añadidas'} al armario`);
 }
-const VLABEL={p:'Pantalones',b:'Camisetas, polos y camisas',m:'Sudaderas, jerséis y capas',c:'Abrigos y chalecos',s:'Calzado',k:'Calcetines'};
+const VLABEL={p:'Pantalones',b:'Camisetas, polos y camisas',m:'Sudaderas, jerséis y capas',c:'Abrigos y chalecos',s:'Calzado',k:'Calcetines',w:'Cinturones'};
 function allIds(v){return [...BASEDOM[v],...Object.keys(CU).filter(id=>CU[id].v===v),...Object.keys(store.custom).filter(id=>!CU[id]&&CU_TYPES[store.custom[id].type]&&CU_TYPES[store.custom[id].type].v===v)];}
 function famName(f){return (PALETTE.find(p=>p[0]===f)||[0,0,f||'—'])[2];}
 function wardrobeHTML(){
@@ -1706,7 +1760,7 @@ function outfitOfDay(){
  const vars=curVars(),now=new Date();
  const recent={},recentKeys=new Set();
  Object.entries(store.hist).forEach(([d,h])=>{const days=(now-new Date(d+'T12:00:00'))/864e5;if(days<=14)recentKeys.add(h.key);if(days<=3)Object.values(h.o||{}).forEach(id=>{if(id)recent[id]=1;});});
- const empty={p:null,b:null,m:null,c:null,s:null,k:null};
+ const empty={p:null,b:null,m:null,c:null,s:null,k:null,w:null};
  let best=null,bs=-1;
  for(let i=0;i<120;i++){let c=0;search(vars,baseDoms(vars,null,empty),as=>{
   if(recentKeys.has(okey(as,vars)))return ++c>=15;
@@ -1736,7 +1790,7 @@ document.addEventListener('click',async e=>{
   if(a==='wear'){await put('hist',today(),{o,mode,key:k,at:new Date().toISOString()});toast('Apuntado en el historial de hoy');}
   if(a==='up'||a==='down'){const id=likeIdOf(k),v=a==='up'?1:-1;if(store.likes[id]&&store.likes[id].v===v){await del('likes',id);toast('Valoración quitada');}else{await put('likes',id,{o,mode,key:k,v,at:new Date().toISOString()});toast(v>0?'Anotado: te gusta. La nota lo tendrá en cuenta.':'Anotado: no te gusta. La nota lo tendrá en cuenta.');}}
   return;}
- const ld=t.closest('[data-load]');if(ld){const src=ld.dataset.load==='fav'?store.favs[ld.dataset.id]:store.hist[ld.dataset.id];if(src){wxs.clear();occs.clear();mode=src.mode;sel={p:null,b:null,m:null,c:null,s:null,k:null};Object.keys(src.o).forEach(v=>{if(src.o[v]&&DOM[v]&&DOM[v].includes(src.o[v]))sel[v]=src.o[v];});if(Object.keys(src.o).some(v=>src.o[v]&&!sel[v]))toast('Este conjunto lleva alguna prenda retirada; elige otra para completarlo.');view='probador';save();renderAll();window.scrollTo({top:0});}return;}
+ const ld=t.closest('[data-load]');if(ld){const src=ld.dataset.load==='fav'?store.favs[ld.dataset.id]:store.hist[ld.dataset.id];if(src){wxs.clear();occs.clear();mode=src.mode;sel={p:null,b:null,m:null,c:null,s:null,k:null,w:null};Object.keys(src.o).forEach(v=>{if(src.o[v]&&DOM[v]&&DOM[v].includes(src.o[v]))sel[v]=src.o[v];});if(Object.keys(src.o).some(v=>src.o[v]&&!sel[v]))toast('Este conjunto lleva alguna prenda retirada; elige otra para completarlo.');view='probador';save();renderAll();window.scrollTo({top:0});}return;}
  const wf=t.closest('[data-wearfav]');if(wf){const f=store.favs[wf.dataset.wearfav];if(f){await put('hist',today(),{o:f.o,mode:f.mode,key:f.key,at:new Date().toISOString()});toast('Apuntado en el historial de hoy');}return;}
  const df=t.closest('[data-delfav]');if(df){await del('favs',df.dataset.delfav);toast('Quitado de favoritos');return;}
  const dh=t.closest('[data-delhist]');if(dh){await del('hist',dh.dataset.delhist);toast('Quitado del historial');return;}
@@ -1814,7 +1868,7 @@ document.getElementById('rand').addEventListener('click',()=>{
  search(vars,baseDoms(vars,null),as=>{got=Object.assign({},as);return true;},true);
  if(got){vars.forEach(v=>sel[v]=got[v]);renderAll();}
 });
-document.getElementById('reset').addEventListener('click',()=>{sel={p:null,b:null,m:null,c:null,s:null,k:null};renderAll();});
+document.getElementById('reset').addEventListener('click',()=>{sel={p:null,b:null,m:null,c:null,s:null,k:null,w:null};renderAll();});
 
 /* ---------- Arranque ---------- */
 if(!modesAllowed().includes(mode))mode=defMode();
