@@ -593,8 +593,7 @@ const DRESSP=new Set(['v_vestBe']);
 const SK={
  /* Marino */
  ejec:{n:'Medias ejecutivas marino',note:'lisas, de vestir',c:'#161C30',exec:1,fam:'marino',g:'Lisos y de vestir'},
- mTrazos:{n:'Marino con trazos celestes',note:'3 pares',c:'#1D2A4E',pat:'motif',p:['#7FB8E6'],fam:'marino',acc:['azulclaro'],g:'Marino'},
- mPajaros:{n:'Marino con pajaritos celestes',note:'2 pares',c:'#1E2A4A',pat:'motif',p:['#6FA8D6'],fam:'marino',acc:['azulclaro'],g:'Marino'},
+ mTrazos:{n:'Calcetines Daikin',note:'azules con moras celestes · 5 pares',c:'#1F2C55',pat:'dots',p:['#7FB8E6'],fam:'marino',acc:['azulclaro'],g:'Marino'},
  mCachemira:{n:'Marino con cachemira celeste',c:'#1A2340',pat:'motif',p:['#6FC0E0'],fam:'marino',acc:['azulclaro'],g:'Marino'},
  mFlorCel:{n:'Marino jaspeado con florecitas celestes',c:'#2A3556',pat:'dots',p:['#9EC2E8'],fam:'marino',acc:['azulclaro'],g:'Marino'},
  mFlores:{n:'Marino con florecitas grises',c:'#1F2944',pat:'dots',p:['#A9AEB8'],fam:'marino',acc:['gris'],g:'Marino'},
@@ -625,10 +624,10 @@ const SK={
  gMicro:{n:'Antracita con topitos de colores',c:'#4A4B50',pat:'micro',p:['#E8B92E','#F2F2F0','#1A1A1A'],fam:'antracita',acc:['mostaza'],g:'Gris'},
  gBordado:{n:'Gris marengo con bordados de colores',c:'#4E5056',pat:'motif',p:['#D9A63A','#E2742E','#7FB8E6'],fam:'antracita',acc:['mostaza','coral'],g:'Gris'},
  gLunares:{n:'Gris oscuro con lunares de colores y puño mostaza',c:'#46474C',pat:'big',p:['#E8B92E','#E2742E','#3FA0B0','#C8342C'],cf:'#E8B92E',fam:'antracita',acc:['mostaza','coral','petroleo'],loud:1,g:'Gris'},
- gNaranja:{n:'Gris con dibujitos naranjas',c:'#7E8086',pat:'motif',p:['#E2742E'],fam:'gris',acc:['coral'],g:'Gris'},
+ gNaranja:{n:'Gris con caballitos de mar naranjas',c:'#7E8086',pat:'motif',p:['#E2742E'],fam:'gris',acc:['coral'],g:'Gris'},
  gCalaveras:{n:'Gris con calaveritas y puño marino',c:'#7C7E84',pat:'motif',p:['#1A1A1A','#C8423A','#E8B92E'],cf:'#1C2440',fam:'gris',acc:['rojo','marino'],g:'Gris'},
  gTopo:{n:'Gris topo con dibujos multicolor y puño burdeos',c:'#8A8378',pat:'motif',p:['#3E6FD8','#E8B92E','#E2582E'],cf:'#6E1F2D',fam:'gris',acc:['burdeos','azul','mostaza'],g:'Gris'},
- gDorado:{n:'Gris claro con dibujos dorados',c:'#AEB0B4',pat:'motif',p:['#B98A3A','#5FA8D6'],fam:'gris',acc:['mostaza','camel'],g:'Gris'},
+ gDorado:{n:'Calcetines Morante',note:'gris claro, puño burdeos',c:'#AEB0B4',pat:'motif',p:['#C4C6CA'],cf:'#6E1F2D',fam:'gris',acc:['burdeos'],g:'Gris'},
  gCalMex:{n:'Gris jaspeado con calaveras y puntera azul',note:'grueso, informal',c:'#A5A7AB',pat:'motif',p:['#2E5FD0','#F2E08A'],cf:'#2E5FD0',fam:'gris',acc:['azul'],loud:1,g:'Gris'},
  /* Burdeos, rojo, verde y colores */
  burLiso:{n:'Burdeos liso',c:'#6A1E28',fam:'burdeos',g:'Burdeos y rojo'},
@@ -653,7 +652,7 @@ const SK={
  none:{n:'Sin calcetines',note:'para verano',c:'#E3B897',none:1,g:'Cortos y deportivos'}
 };
 /* ids antiguos (favoritos e historial guardados) */
-const KALIAS={marinoD:'mTrazos',grisD:'gNaranja',negroD:'nMostaza',burdeos:'burLiso',verde:'vLiso',rojo:'xHoHo',rayas:'nRayas',vivo:'aTopos'};
+const KALIAS={mPajaros:'mTrazos',marinoD:'mTrazos',grisD:'gNaranja',negroD:'nMostaza',burdeos:'burLiso',verde:'vLiso',rojo:'xHoHo',rayas:'nRayas',vivo:'aTopos'};
 const kid=id=>SK[id]||isCU(id)?id:(KALIAS[id]||id);
 const KGROUPS=['Lisos y de vestir','Marino','Negro','Gris','Burdeos y rojo','Verde','Colores vivos','Navidad','Cortos y deportivos'];
 const FAM={teeGods:'negro',teeMarron:'marron',teeCoral:'coral',teeEme:'blanco',teeVerdoso:'gris',teeEsnz:'blanco',teeYuxi:'azul',teePerla:'gris',teeCorona:'blanco',teeLacMar:'marino',teeTommy:'marino',teeFG:'marino',teeShed:'gris',teeMalva:'malva',teeSalvia:'salvia',teeGodsBl:'blanco',
