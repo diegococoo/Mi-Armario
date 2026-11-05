@@ -1277,13 +1277,13 @@ function beltDraw(id,x0,y0,w){
  const bx=x0+w/2-7;s+=`<rect x="${bx}" y="${y0-1.5}" width="14" height="12" rx="2" fill="none" stroke="${o.buckle||'#9C9A94'}" stroke-width="2"/>`;
  return s;
 }
-const UNDER=topSVG({t:'tee',c:'#D9DCE3'});
+const UNDER=`<path d="M58,20 L82,14 Q100,26 118,14 L142,20 L142,134 L58,134Z" fill="#D9DCE3"/>`;
 const photoSrc=id=>{const d=(isCU(id)&&CU[id])||(typeof store!=='undefined'&&store.edits[id])||null;if(!d)return null;if(d.photoData)return d.photoData;if(d.photo)return '/_blob/'+d.photo;return null;};
 const photoOf=id=>null; /* sin fotos reales: siempre dibujo */
 const thumb0={
  p:id=>`<svg viewBox="40 124 120 136" aria-hidden="true">${pantDraw(id)}</svg>`,
  b:id=>`<svg viewBox="8 -12 184 156" aria-hidden="true">${baseSVG(id)}</svg>`,
- m:id=>`<svg viewBox="8 -12 184 152" aria-hidden="true">${UNDER}${midSVG(id)}</svg>`,
+ m:id=>`<svg viewBox="8 -12 184 152" aria-hidden="true">${['zip','cardigan'].includes(topType('m',id))?UNDER:''}${midSVG(id)}</svg>`,
  c:id=>`<svg viewBox="2 -16 196 ${info('c',id).k==='long'?228:192}" aria-hidden="true">${UNDER}${coatSVG(id)}</svg>`,
  s:id=>`<svg viewBox="50 240 100 62" aria-hidden="true">${shoe2(id)}</svg>`,
  w:id=>id==='none'?`<svg viewBox="0 0 120 40" aria-hidden="true"><text x="60" y="25" text-anchor="middle" font-size="11" fill="#8A90A0" font-family="Arial">sin cinturón</text></svg>`:`<svg viewBox="0 0 120 40" aria-hidden="true">${beltDraw(id,4,14,112)}</svg>`,
@@ -2002,7 +2002,7 @@ initAI();
 
 </script>
 
-<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 5 nov · 12:30</p>
+<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 5 nov · 12:40</p>
 <script>
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).catch(()=>{});});}
 </script>
