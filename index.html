@@ -981,7 +981,9 @@ function pair(va,a,vb,b){
     if((tm==='hoodie'||tm==='polosweat'||tm==='pshirt')&&tb!=='tee')return false;
     const fa=famOf('b',a),fb=famOf('m',b);
     if(fa===fb&&fa!=='blanco')return false;
-    if(clash(fa,fb))return false;return true;}
+    if(clash(fa,fb))return false;
+    const vis=baseVis(a,b);if((vis==='collar'||vis==='full')&&fa!==fb&&cdist(info('b',a).c,info('m',b).c)<35)return false;
+    return true;}
   case 'bc':{const f=famOf('b',a);return !(famOf('c',b)==='beige'&&['beige','crema'].includes(f));}
   case 'bs':return shoeTop('b',a,b);
   case 'bk':return sockTop('b',a,b);
@@ -1118,10 +1120,21 @@ function midDraw(o){
  return s;
 }
 function midSVG(id){if(T[id])return topSVG(T[id]);return midDraw(isCU(id)?CU[id]:NM[id]);}
+/* Qué se ve de la prenda de debajo: 'full' (camisa o capa abierta), 'collar' (cuello por fuera), 'hint' (asoma un poco) o null */
+function baseVis(b,m){
+ const tm=topType('m',m),tb=topType('b',b);
+ if(['hoodie','polosweat','pshirt'].includes(tm))return null;
+ if(tb==='shirt'||['zip','cardigan'].includes(tm))return 'full';
+ if(tb==='polo')return 'collar';
+ if(tm==='knitV')return 'collar';
+ return 'hint';
+}
+function cdist(a,b){const x=parseInt(a.slice(1),16),y=parseInt(b.slice(1),16);const d=[(x>>16)-(y>>16),((x>>8)&255)-((y>>8)&255),(x&255)-(y&255)];return Math.sqrt(d[0]*d[0]+d[1]*d[1]+d[2]*d[2]);}
 function peek(b,m){
  const tm=topType('m',m),tb=topType('b',b);
- if(tb==='tee'||tm==='hoodie'||tm==='zip'||tm==='polosweat'||tm==='pshirt')return '';
+ if(tm==='hoodie'||tm==='zip'||tm==='polosweat'||tm==='pshirt'||tm==='cardigan')return '';
  const col=info('b',b).c;
+ if(tb==='tee')return tm==='knitV'?`<path d="M88,14 L100,34 L112,14 L108,14 L100,28 L92,14Z" fill="${col}" ${ST}/>`:`<path d="M86,13 Q100,25 114,13 L114,16 Q100,28 86,16Z" fill="${col}" ${ST}/>`;
  if(tm==='hzip')return `<path d="M84,8 L96,22 L90,26 L78,12Z M116,8 L104,22 L110,26 L122,12Z" fill="${col}" ${ST}/>`;
  return `<path d="M84,14 L100,29 L92,35 L77,19Z M116,14 L100,29 L108,35 L123,19Z" fill="${col}" ${ST}/>`;
 }
@@ -1290,7 +1303,7 @@ const KFAM=Object.fromEntries(Object.entries(SK).map(([k,o])=>[k,o.fam||null]));
 const ACC=new Set(['burdeos','verde','oliva','coral','rojo','rosa','lila','menta','salvia','malva','indigo','azul','petroleo','mostaza']);
 const EARTH=new Set(['camel','marron','crema','beige','burdeos','oliva','verde','mostaza']);
 const COLD=new Set(['indigo','azul','lila','rosa','menta','coral','petroleo','malva','salvia']);
-const PAIRS={'marino|camel':6,'marino|beige':5,'marino|gris':3,'marino|blanco':3,'burdeos|gris':4,'burdeos|marino':4,'burdeos|denim':3,'verde|camel':5,'verde|beige':4,'verde|gris':3,'azulclaro|marino':4,'azulclaro|camel':4,'azulclaro|beige':3,'crema|camel':5,'crema|denim':4,'crema|marino':4,'blanco|denim':3,'blanco|denimclaro':2,'lila|gris':3,'malva|denim':4,'oliva|denim':3,'oliva|crema':4,'camel|negro':4,'camel|denim':3,'coral|marino':4,'rosa|gris':3,'rosa|marino':3,'marron|crema':3,'gris|negro':2,'oliva|blanco':3,'oliva|negro':3,'oliva|marino':3,'mostaza|marino':5,'mostaza|gris':4,'beige|blanco':3,'marron|azulclaro':4,'marron|gris':3,'marron|denim':3,'marron|blanco':3,'marron|beige':3,'azulclaro|beige':3};
+const PAIRS={'marino|camel':6,'blanco|antracita':3,'blanco|negro':2,'azulclaro|antracita':3,'azulclaro|gris':2,'marino|beige':5,'marino|gris':3,'marino|blanco':3,'burdeos|gris':4,'burdeos|marino':4,'burdeos|denim':3,'verde|camel':5,'verde|beige':4,'verde|gris':3,'azulclaro|marino':4,'azulclaro|camel':4,'azulclaro|beige':3,'crema|camel':5,'crema|denim':4,'crema|marino':4,'blanco|denim':3,'blanco|denimclaro':2,'lila|gris':3,'malva|denim':4,'oliva|denim':3,'oliva|crema':4,'camel|negro':4,'camel|denim':3,'coral|marino':4,'rosa|gris':3,'rosa|marino':3,'marron|crema':3,'gris|negro':2,'oliva|blanco':3,'oliva|negro':3,'oliva|marino':3,'mostaza|marino':5,'mostaza|gris':4,'beige|blanco':3,'marron|azulclaro':4,'marron|gris':3,'marron|denim':3,'marron|blanco':3,'marron|beige':3,'azulclaro|beige':3};
 const pairBonus=(a,b)=>PAIRS[a+'|'+b]||PAIRS[b+'|'+a]||0;
 const GOODSHOE={sl72:['cCamel','dustin','denim','negro','leeGris'],mocasin:['cCamel','cBeige','cGris','cMarino','cAcero','v_vestBe'],oxford:['cMarino','cGris','v_vestBe','negro'],oxfordNeg:['cGris','cMarino','negro','v_vestBe'],anteMarron:['cMarino','cGris','cAcero','dustin','denim','negro'],anteMarino:['cCamel','cBeige','cGris','cCrudo','v_vestBe'],nauticos:['cBeige','cCamel','cCrudo','cAcero','cMarino'],botines:['dustin','denim','negro','leeGris','cCamel'],blazer:['dustin','denim','negro','leeGris','cBeige'],gazelle:['levis','levisB','leeClaro','dustinClaro','grisaceo','cCamel','cBeige'],spNeg:['cCamel','leeGris','levis','leeClaro','wrangler'],spGris:['dustin','denim','negro','cMarino'],nb327:['dustin','denim','cMarino'],nb2002:['levis','leeClaro','dustinClaro','leeGris'],vomero:['dustin','denim','negro','leeGris'],nikeGris:['levis','leeClaro','dustin','denim'],superga:['leeGris','cCamel','wrangler']};
 function lum(hex){const n=parseInt(hex.slice(1),16),f=v=>{v/=255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4)};return .2126*f(n>>16)+.7152*f(n>>8&255)+.0722*f(n&255);}
@@ -1314,7 +1327,8 @@ function scoreOf(o,vars,opts){
  let s=62;
  const cloth=[];
  if(has('p'))cloth.push({v:'p',f:famOf('p',o.p),c:info('p',o.p).c});
- if(has('b')&&!(has('m')&&topType('b',o.b)!=='shirt'))cloth.push({v:'b',f:famOf('b',o.b),c:info('b',o.b).c});
+ const bvis=has('b')&&has('m')?baseVis(o.b,o.m):null;
+ if(has('b')&&(!has('m')||bvis==='full'||bvis==='collar'))cloth.push({v:'b',f:famOf('b',o.b),c:info('b',o.b).c});
  if(has('m'))cloth.push({v:'m',f:famOf('m',o.m),c:info('m',o.m).c});
  if(has('c'))cloth.push({v:'c',f:famOf('c',o.c),c:info('c',o.c).c});
  const shoeF=has('s')?famOf('s',o.s):null;
@@ -1329,6 +1343,21 @@ function scoreOf(o,vars,opts){
  for(let i=0;i<cloth.length;i++)for(let j=i+1;j<cloth.length;j++){const b=pairBonus(cloth[i].f,cloth[j].f);if(b>pb){pb=b;best=famName(cloth[i].f).toLowerCase()+' y '+famName(cloth[j].f).toLowerCase();}}
  const pairSum=Math.min(8,cloth.reduce((a,x,i)=>a+cloth.slice(i+1).reduce((b,y)=>b+pairBonus(x.f,y.f),0),0));
  if(pairSum)add(pairSum,`Combinación clásica (${best})`);
+ if(bvis){
+  const fb=famOf('b',o.b),fm=famOf('m',o.m),d=cdist(info('b',o.b).c,info('m',o.m).c),pb2=pairBonus(fb,fm);
+  const tb=topType('b',o.b),qu=tb==='polo'?'El cuello del polo':tb==='shirt'?'El cuello de la camisa':'La camiseta';
+  if(bvis==='hint'){
+   if(pb2>0)add(2,'La camiseta que asoma combina con la sudadera');
+   else if(ACC.has(fb)&&ACC.has(fm))add(-3,'La camiseta asoma en otro color fuerte');
+  }else{
+   if(d<45)add(-6,qu+' se pierde: casi del mismo tono que la prenda de encima');
+   else if(d>150)add(4,qu+' destaca bien sobre la capa de encima');
+   if(pb2>0)add(Math.min(6,pb2+1),`Cuello y capa combinan (${famName(fb).toLowerCase()} y ${famName(fm).toLowerCase()})`);
+   if(ACC.has(fb)&&!ACC.has(fm))add(4,qu+' pone el toque de color');
+   else if(ACC.has(fb)&&ACC.has(fm)&&!pb2)add(-5,'Cuello y capa: dos colores fuertes que no casan');
+   else if(!ACC.has(fb)&&!ACC.has(fm)&&!pb2&&d<=150&&d>=45)add(-1,'Cuello y capa en neutros sin mucha gracia');
+  }
+ }
  const all=[...cloth.map(x=>x.f),shoeF].filter(Boolean);
  if(all.filter(f=>EARTH.has(f)).length>=3&&!all.some(f=>COLD.has(f)))add(7,'Paleta de tierras coherente');
  const outer=cloth.filter(x=>x.v!=='p').pop();
@@ -1363,7 +1392,7 @@ function scoreOf(o,vars,opts){
 {const bv=(has('m')&&!has('c')&&info('m',o.m).back)||(has('b')&&!has('m')&&!has('c')&&T[o.b]&&T[o.b].back);
   if(bv&&bv.big){const pa=has('p')&&ACC.has(famOf('p',o.p)),loud=has('k')&&info('k',o.k).loud;
    if(pa||loud)add(-4,'Espalda muy estampada: mejor pantalón y calcetín sobrios');else if(has('p'))add(3,'La espalda estampada manda y el resto acompaña');}}
- const fz=[];['b','m','c'].forEach(v=>{if(has(v)&&!(v==='b'&&has('m')&&topType('b',o.b)!=='shirt'))fz.push(fzTop(v,o[v]));});if(has('s'))fz.push(shoeFz(o.s));
+ const fz=[];['b','m','c'].forEach(v=>{if(has(v)&&!(v==='b'&&has('m')&&!['full','collar'].includes(bvis)))fz.push(fzTop(v,o[v]));});if(has('s'))fz.push(shoeFz(o.s));
  if(fz.length>=2){const sp=Math.max(...fz)-Math.min(...fz);if(sp===0)add(5,'Mismo nivel de formalidad');else if(sp===2)add(-5,'Mezcla formal con muy informal');}
  if(has('b')&&has('m')){const tm=topType('m',o.m);
   if(topType('b',o.b)==='shirt'&&['knit','knitV','cardigan','hzip','sweat'].includes(tm))add(4,'Camisa bajo punto: capa clásica');
