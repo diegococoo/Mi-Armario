@@ -1247,13 +1247,22 @@ const GHOST={
  k:`<rect x="64" y="250" width="24" height="20" ${GH}/><rect x="112" y="250" width="24" height="20" ${GH}/>`,
  s:`<path d="M59,264 L93,264 Q98,276 97,292 Q76,298 56,292 Q53,278 59,264Z" ${GH}/><path d="M107,264 L141,264 Q147,278 144,292 Q124,298 103,292 Q102,276 107,264Z" ${GH}/>`
 };
+let FIGN=0;
 function figure(o,vars,ghost){
- o=o||sel;vars=vars||MODES[mode].vars;ghost=ghost!==false;
+ o=o||sel;vars=vars||MODES[mode].vars;
+ /* las líneas discontinuas solo orientan con el maniquí vacío; en cuanto eliges algo desaparecen */
+ ghost=ghost!==false&&!vars.some(v=>o[v]);
  const has=v=>vars.includes(v),g=v=>ghost?GHOST[v]:'';
- let s=o.k?sock2(o.k):g('k');
+ const fid='fg'+(++FIGN);
+ /* con una capa de manga larga encima, de la prenda de debajo solo se ve el cuerpo: se recortan las mangas cortas */
+ const clipB=has('m')&&o.m&&o.b;
+ let s=clipB?`<defs><clipPath id="${fid}b"><rect x="49" y="-16" width="102" height="160"/></clipPath></defs>`:'';
+ s+=o.k?sock2(o.k):g('k');
  s+=o.p?pantDraw(o.p):g('p');
- s+=o.b?baseSVG(o.b):g('b');
- if(has('m')){s+=o.m?midSVG(o.m):g('m');if(o.m&&o.b){s+=peek(o.b,o.m);if(info('b',o.b)&&topType('b',o.b)==='tee')s+=`<path d="M51,133 L149,133 L149,140 L51,140Z" fill="${info('b',o.b).c}" ${ST}/>`;}}
+ s+=o.b?(clipB?`<g clip-path="url(#${fid}b)">${baseSVG(o.b)}</g>`:baseSVG(o.b)):g('b');
+ const clipM=has('c')&&o.c&&o.m&&!['vest','vestp'].includes(info('c',o.c).k);
+ if(clipM)s+=`<defs><clipPath id="${fid}m"><rect x="60" y="-16" width="80" height="200"/></clipPath></defs>`;
+ if(has('m')){s+=o.m?(clipM?`<g clip-path="url(#${fid}m)">${midSVG(o.m)}</g>`:midSVG(o.m)):g('m');if(o.m&&o.b){s+=peek(o.b,o.m);if(info('b',o.b)&&topType('b',o.b)==='tee')s+=`<path d="M51,133 L149,133 L149,140 L51,140Z" fill="${info('b',o.b).c}" ${ST}/>`;}}
  if(has('c'))s+=o.c?coatSVG(o.c):g('c');
  if(has('w')&&o.w&&o.w!=='none'&&o.p&&!has('c')){const tm=has('m')&&o.m?topType('m',o.m):null;const tb=o.b?topType('b',o.b):null;if(!tm&&(tb==='shirt'||tb==='polo'))s+=beltDraw(o.w,55,134,90);}
  s+=o.s?shoe2(o.s):g('s');
