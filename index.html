@@ -1120,22 +1120,24 @@ function midDraw(o){
  return s;
 }
 function midSVG(id){if(T[id])return topSVG(T[id]);return midDraw(isCU(id)?CU[id]:NM[id]);}
-/* Qué se ve de la prenda de debajo: 'full' (camisa o capa abierta), 'collar' (cuello por fuera), 'hint' (asoma un poco) o null */
+/* Qué se ve de la prenda de debajo:
+   'full'   camisa, o capa abierta (cremallera entera, media cremallera sin cerrar del todo, cárdigan)
+   'collar' cuello del polo por fuera
+   'hem'    camiseta que sobresale por abajo (tus sudaderas son más cortas) */
 function baseVis(b,m){
  const tm=topType('m',m),tb=topType('b',b);
- if(['hoodie','polosweat','pshirt'].includes(tm))return null;
- if(tb==='shirt'||['zip','cardigan'].includes(tm))return 'full';
- if(tb==='polo')return 'collar';
- if(tm==='knitV')return 'collar';
- return 'hint';
+ if(tb==='shirt'||['zip','cardigan','hzip'].includes(tm))return 'full';
+ if(tb==='polo')return ['hoodie','polosweat','pshirt'].includes(tm)?null:'collar';
+ return 'hem';
 }
 function cdist(a,b){const x=parseInt(a.slice(1),16),y=parseInt(b.slice(1),16);const d=[(x>>16)-(y>>16),((x>>8)&255)-((y>>8)&255),(x&255)-(y&255)];return Math.sqrt(d[0]*d[0]+d[1]*d[1]+d[2]*d[2]);}
 function peek(b,m){
  const tm=topType('m',m),tb=topType('b',b);
- if(tm==='hoodie'||tm==='zip'||tm==='polosweat'||tm==='pshirt'||tm==='cardigan')return '';
+ if(tm==='zip'||tm==='polosweat'||tm==='pshirt'||tm==='cardigan')return '';
+ if(tm==='hoodie')return tb==='tee'?`<path d="M88,24 Q100,34 112,24 L112,27 Q100,37 88,27Z" fill="${info('b',b).c}" ${ST}/>`:'';
  const col=info('b',b).c;
  if(tb==='tee')return tm==='knitV'?`<path d="M88,14 L100,34 L112,14 L108,14 L100,28 L92,14Z" fill="${col}" ${ST}/>`:`<path d="M86,13 Q100,25 114,13 L114,16 Q100,28 86,16Z" fill="${col}" ${ST}/>`;
- if(tm==='hzip')return `<path d="M84,8 L96,22 L90,26 L78,12Z M116,8 L104,22 L110,26 L122,12Z" fill="${col}" ${ST}/>`;
+ if(tm==='hzip')return tb==='tee'?`<path d="M93,10 L100,40 L107,10Z" fill="${col}" ${ST}/>`:`<path d="M84,8 L96,22 L90,26 L78,12Z M116,8 L104,22 L110,26 L122,12Z" fill="${col}" ${ST}/><path d="M95,22 L100,40 L105,22Z" fill="${col}"/>`;
  return `<path d="M84,14 L100,29 L92,35 L77,19Z M116,14 L100,29 L108,35 L123,19Z" fill="${col}" ${ST}/>`;
 }
 function vestDraw(o){
@@ -1251,7 +1253,7 @@ function figure(o,vars,ghost){
  let s=o.k?sock2(o.k):g('k');
  s+=o.p?pantDraw(o.p):g('p');
  s+=o.b?baseSVG(o.b):g('b');
- if(has('m')){s+=o.m?midSVG(o.m):g('m');if(o.m&&o.b)s+=peek(o.b,o.m);}
+ if(has('m')){s+=o.m?midSVG(o.m):g('m');if(o.m&&o.b){s+=peek(o.b,o.m);if(info('b',o.b)&&topType('b',o.b)==='tee')s+=`<path d="M51,133 L149,133 L149,140 L51,140Z" fill="${info('b',o.b).c}" ${ST}/>`;}}
  if(has('c'))s+=o.c?coatSVG(o.c):g('c');
  if(has('w')&&o.w&&o.w!=='none'&&o.p&&!has('c')){const tm=has('m')&&o.m?topType('m',o.m):null;const tb=o.b?topType('b',o.b):null;if(!tm&&(tb==='shirt'||tb==='polo'))s+=beltDraw(o.w,55,134,90);}
  s+=o.s?shoe2(o.s):g('s');
@@ -1328,7 +1330,7 @@ function scoreOf(o,vars,opts){
  const cloth=[];
  if(has('p'))cloth.push({v:'p',f:famOf('p',o.p),c:info('p',o.p).c});
  const bvis=has('b')&&has('m')?baseVis(o.b,o.m):null;
- if(has('b')&&(!has('m')||bvis==='full'||bvis==='collar'))cloth.push({v:'b',f:famOf('b',o.b),c:info('b',o.b).c});
+ if(has('b')&&(!has('m')||bvis))cloth.push({v:'b',f:famOf('b',o.b),c:info('b',o.b).c});
  if(has('m'))cloth.push({v:'m',f:famOf('m',o.m),c:info('m',o.m).c});
  if(has('c'))cloth.push({v:'c',f:famOf('c',o.c),c:info('c',o.c).c});
  const shoeF=has('s')?famOf('s',o.s):null;
@@ -1345,17 +1347,20 @@ function scoreOf(o,vars,opts){
  if(pairSum)add(pairSum,`Combinación clásica (${best})`);
  if(bvis){
   const fb=famOf('b',o.b),fm=famOf('m',o.m),d=cdist(info('b',o.b).c,info('m',o.m).c),pb2=pairBonus(fb,fm);
-  const tb=topType('b',o.b),qu=tb==='polo'?'El cuello del polo':tb==='shirt'?'El cuello de la camisa':'La camiseta';
-  if(bvis==='hint'){
-   if(pb2>0)add(2,'La camiseta que asoma combina con la sudadera');
-   else if(ACC.has(fb)&&ACC.has(fm))add(-3,'La camiseta asoma en otro color fuerte');
+  const tb=topType('b',o.b),zipOpen=['hzip','zip','cardigan'].includes(topType('m',o.m)),qu=tb==='polo'?(zipOpen?'El polo que se ve por la cremallera':'El cuello del polo'):tb==='shirt'?'La camisa':(zipOpen?'La camiseta que se ve por la cremallera':'La camiseta');
+  if(bvis==='hem'){
+   if(pb2>0)add(Math.min(5,pb2+1),`La camiseta que asoma por abajo combina con la capa (${famName(fb).toLowerCase()} y ${famName(fm).toLowerCase()})`);
+   if(ACC.has(fb)&&ACC.has(fm)&&!pb2&&fb!==fm)add(-5,'La camiseta que asoma por abajo choca con la capa');
+   else if(ACC.has(fb)&&!ACC.has(fm))add(3,'La camiseta pone un toque de color por abajo');
+   else if(d<45&&fb!==fm)add(-2,'La camiseta se confunde con la capa');
+   if(has('p')){const dp=cdist(info('b',o.b).c,info('p',o.p).c),fp=famOf('p',o.p);if(dp<40&&fp!==fb)add(-3,'La camiseta que asoma casi se funde con el pantalón');}
   }else{
    if(d<45)add(-6,qu+' se pierde: casi del mismo tono que la prenda de encima');
    else if(d>150)add(4,qu+' destaca bien sobre la capa de encima');
-   if(pb2>0)add(Math.min(6,pb2+1),`Cuello y capa combinan (${famName(fb).toLowerCase()} y ${famName(fm).toLowerCase()})`);
+   if(pb2>0)add(Math.min(6,pb2+1),`${zipOpen?'Lo de debajo y la capa':'Cuello y capa'} combinan (${famName(fb).toLowerCase()} y ${famName(fm).toLowerCase()})`);
    if(ACC.has(fb)&&!ACC.has(fm))add(4,qu+' pone el toque de color');
-   else if(ACC.has(fb)&&ACC.has(fm)&&!pb2)add(-5,'Cuello y capa: dos colores fuertes que no casan');
-   else if(!ACC.has(fb)&&!ACC.has(fm)&&!pb2&&d<=150&&d>=45)add(-1,'Cuello y capa en neutros sin mucha gracia');
+   else if(ACC.has(fb)&&ACC.has(fm)&&!pb2&&fb!==fm)add(-5,(zipOpen?'Lo de debajo y la capa':'Cuello y capa')+': dos colores fuertes que no casan');
+   else if(!ACC.has(fb)&&!ACC.has(fm)&&!pb2&&d<=150&&d>=45)add(-1,(zipOpen?'Lo de debajo y la capa':'Cuello y capa')+' en neutros sin mucha gracia');
   }
  }
  const all=[...cloth.map(x=>x.f),shoeF].filter(Boolean);
@@ -1426,8 +1431,18 @@ const COLLS=['favs','hist','likes','custom','edits'];
 const store={favs:{},hist:{},likes:{},custom:{},edits:{}};
 let DB=null,syncState='cargando',SAMPLE=null,ASSETS=null,CANIMG=false;
 const LSKEY='probador3-data';
-function lsLoad(){try{const v=JSON.parse(localStorage.getItem(LSKEY)||'null');if(v)COLLS.forEach(c=>{store[c]=v[c]||{};});}catch(e){}}
-function lsSave(){if(DB)return;try{localStorage.setItem(LSKEY,JSON.stringify(store))}catch(e){toast('El móvil no tiene espacio para guardar más. Quita fotos de prendas que no uses o haz una copia de seguridad.');}}
+let LSBAD=false;
+const nItems=v=>v?COLLS.reduce((a,c)=>a+Object.keys(v[c]||{}).length,0):0;
+function lsLoad(){
+ try{
+  let raw=localStorage.getItem(LSKEY),v=JSON.parse(raw||'null');
+  const prev=JSON.parse(localStorage.getItem(LSKEY+'-copia')||'null');
+  if(nItems(prev)>nItems(v)&&nItems(v)===0)v=prev;            /* si lo principal se ha vaciado, recupera la copia */
+  if(v){COLLS.forEach(c=>{store[c]=v[c]||{};});if(nItems(v))localStorage.setItem(LSKEY+'-copia',JSON.stringify(v));}
+  LSBAD=false;
+ }catch(e){LSBAD=true;}
+}
+function lsSave(){if(DB||LSBAD)return;try{localStorage.setItem(LSKEY,JSON.stringify(store))}catch(e){toast('El móvil no tiene espacio para guardar más. Quita fotos de prendas que no uses o haz una copia de seguridad.');}}
 async function put(c,id,data){
  store[c][id]=data;afterData(c);
  if(DB){try{await DB.collection(c).doc(id).set(data);}catch(e){toast(e&&e.code==='quota_exceeded'?'No queda espacio para guardar más. Borra algo antiguo.':'No se pudo guardar. Inténtalo de nuevo.');}}
@@ -1509,7 +1524,7 @@ async function initAI(){
 async function initStore(){
  lsLoad();applyCustom();
  let db=null;try{db=await window.claude?.use?.('db');}catch(e){db=null;}
- if(!db){setSync('Guardado solo en este dispositivo.');return;}
+ if(!db){setSync('Guardado solo en este dispositivo.');try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist();}catch(e){}if(view==='hist')renderHist();return;}
  const timer=setTimeout(()=>setSync('Sin conexión con tu armario guardado; puede no estar al día.'),10000);
  let pending=COLLS.length;
  COLLS.forEach(c=>{
@@ -1532,7 +1547,11 @@ try{const v=JSON.parse(localStorage.getItem('probador3')||'null');if(v){if(typeo
 const save=()=>{try{localStorage.setItem('probador3',JSON.stringify({mode,showOff,wx:wxList(),occ:occList()}))}catch(e){}};
 const esc2=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
 const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
-const fmtDate=s=>{const [y,m,d]=s.split('-');return `${+d} ${['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'][+m-1]} ${y}`;};
+const fmtDate=s=>{const [y,m,d]=s.slice(0,10).split('-');const t=s.length>11?' · '+s.slice(11,13)+':'+s.slice(13,15):'';return `${+d} ${['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'][+m-1]} ${y}${t}`;};
+const histId=()=>{const d=new Date();return today()+'_'+String(d.getHours()).padStart(2,'0')+String(d.getMinutes()).padStart(2,'0')+String(d.getSeconds()).padStart(2,'0');};
+const wornToday=k=>Object.entries(store.hist).some(([id,h])=>id.slice(0,10)===today()&&h&&h.key===k);
+const cleanO=(o,vars)=>{const r={};vars.forEach(v=>{if(o&&o[v]&&info(v,o[v]))r[v]=o[v];});return r;};
+const histDays=()=>new Set(Object.keys(store.hist).map(id=>id.slice(0,10))).size;
 let toastT=null;
 function toast(t){const el=document.getElementById('toast');el.textContent=t;el.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>{el.hidden=true;},2600);}
 const ICON={
@@ -1565,7 +1584,7 @@ function renderScore(){
  <ul class="why">${pos.map(w=>`<li class="pos"><b>+${w[0]}</b><span>${esc2(w[1])}</span></li>`).join('')}${neg.map(w=>`<li class="neg"><b>${w[0]}</b><span>${esc2(w[1])}</span></li>`).join('')}</ul>`;
 }
 function renderActs(){
- const done=isComplete(),k=curKey(),fid=favIdOf(k),isFav=!!store.favs[fid],lk=store.likes[likeIdOf(k)],worn=!!store.hist[today()]&&store.hist[today()].key===k;
+ const done=isComplete(),k=curKey(),fid=favIdOf(k),isFav=!!store.favs[fid],lk=store.likes[likeIdOf(k)],worn=wornToday(k);
  const dis=done?'':'disabled';
  document.getElementById('acts').innerHTML=
   `<button type="button" class="act" id="act-fav" data-act="fav" aria-pressed="${isFav}" ${dis}>${isFav?ICON.favOn:ICON.fav}${isFav?'Guardado':'Favorito'}</button>`+
@@ -1604,23 +1623,24 @@ function renderProbador(){
 }
 
 /* ---------- Render: favoritos e historial ---------- */
-function outfitCard(o,vars,extra,btns){
+function outfitCard(o0,vars,extra,btns){
+ const o=cleanO(o0,vars);
  const r=scoreOf(o,vars),col=r?band(r.s)[0]:'var(--muted)';
- const names=vars.filter(v=>o[v]).map(v=>`<li>${esc2(info(v,o[v]).n)}</li>`).join('');
+ const names=vars.filter(v=>o0&&o0[v]).map(v=>o[v]?`<li>${esc2(info(v,o[v]).n)}</li>`:`<li style="color:var(--muted)">Prenda que ya no está en el armario</li>`).join('');
  return `<div class="ocard"><div class="f">${figure(o,vars,false)}</div><div class="m"><b style="color:${col}">${r?r.s:'—'}</b>${extra}<ul>${names}</ul><div class="row2">${btns}</div></div></div>`;
 }
 const validO=(o,vars)=>vars.every(v=>!o[v]||info(v,o[v]));
 function renderFav(){
  const el=document.getElementById('v-fav');
  const list=Object.entries(store.favs).sort((a,b)=>(b[1].at||'').localeCompare(a[1].at||''));
- el.innerHTML=`<div class="vh"><h2>Favoritos</h2><p>${list.length} conjuntos guardados</p></div>`+(list.length?`<div class="cards">${list.map(([id,f])=>{const vars=MODES[f.mode].vars;if(!validO(f.o,vars))return '';
+ el.innerHTML=`<div class="vh"><h2>Favoritos</h2><p>${list.length} conjuntos guardados</p></div>`+(list.length?`<div class="cards">${list.map(([id,f])=>{if(!f||!f.o)return '';const vars=(MODES[f.mode]||MODES[1]).vars;
   return outfitCard(f.o,vars,`<span class="d">${MODES[f.mode].n}${f.at?' · '+fmtDate(f.at.slice(0,10)):''}</span>`,`<button type="button" class="mini pri" id="fl-${id}" data-load="fav" data-id="${id}">Probar</button><button type="button" class="mini" id="fw-${id}" data-wearfav="${id}">Lo llevo hoy</button><button type="button" class="mini" id="fd-${id}" data-delfav="${id}">Quitar</button>`);}).join('')}</div>`:`<div class="empty-v">Aún no tienes favoritos. Completa un conjunto en el probador y pulsa el corazón.</div>`);
 }
 function renderHist(){
  const el=document.getElementById('v-hist');
  const list=Object.entries(store.hist).sort((a,b)=>b[0].localeCompare(a[0]));
- el.innerHTML=`<div class="vh"><h2>Historial</h2><p>${list.length} días registrados</p></div>`+(list.length?`<div class="cards">${list.map(([id,h])=>{const vars=MODES[h.mode].vars;if(!validO(h.o,vars))return '';
-  return outfitCard(h.o,vars,`<span class="d">${fmtDate(id)}</span>`,`<button type="button" class="mini pri" id="hl-${id}" data-load="hist" data-id="${id}">Probar</button><button type="button" class="mini" id="hd-${id}" data-delhist="${id}">Quitar</button>`);}).join('')}</div>`:`<div class="empty-v">Cuando completes un conjunto y pulses "Lo llevo hoy", aparecerá aquí con su fecha.</div>`);
+ el.innerHTML=`<div class="vh"><h2>Historial</h2><p>${list.length} conjuntos en ${histDays()} días</p></div>`+(list.length?`<div class="cards">${list.map(([id,h])=>{if(!h||!h.o)return '';const vars=(MODES[h.mode]||MODES[1]).vars;
+  return outfitCard(h.o,vars,`<span class="d">${fmtDate(id)}</span>`,`<button type="button" class="mini pri" id="hl-${id}" data-load="hist" data-id="${id}">Probar</button><button type="button" class="mini" id="hd-${id}" data-delhist="${id}">Quitar</button>`);}).join('')}</div>`:`<div class="empty-v">${syncState==='cargando'?'Cargando tu historial…':'Cuando completes un conjunto y pulses "Lo llevo hoy", aparecerá aquí con su fecha.'}</div>`);
 }
 
 /* ---------- Render: estadísticas ---------- */
@@ -1638,13 +1658,13 @@ function renderStats(){
  const famList=Object.entries(fams).sort((a,b)=>b[1]-a[1]);const totalF=clothes.length;
  const famCol=f=>PALC[f]||'#999';
  const famName=f=>(PALETTE.find(p=>p[0]===f)||[0,0,f])[2];
- const hs=Object.values(store.hist).map(h=>{const r=scoreOf(h.o,MODES[h.mode].vars,{noPref:true});return r?r.s:null;}).filter(x=>x!=null);
+ const hs=Object.values(store.hist).map(h=>{const vars=(MODES[h&&h.mode]||MODES[1]).vars;const r=h&&h.o?scoreOf(cleanO(h.o,vars),vars,{noPref:true}):null;return r?r.s:null;}).filter(x=>x!=null);
  const avg=hs.length?Math.round(hs.reduce((a,b)=>a+b,0)/hs.length):null;
  const likes=Object.values(store.likes),up=likes.filter(l=>l.v>0).length,down=likes.length-up;
  const neverWorn=Object.keys(store.hist).length?clothes.filter(([,id])=>!wear[id]).length:null;
  const li=(v,id,val,max,label)=>`<li><i style="background:${info(v,id).c}"></i><span>${esc2(info(v,id).n)}</span><span class="tr"><div style="width:${Math.round(100*val/max)}%"></div></span><em>${label}</em></li>`;
  el.innerHTML=`<div class="vh"><h2>Estadísticas</h2><p>${clothes.length} prendas y ${DOM.k.length} tipos de calcetín</p></div>
- <div class="kpis"><div class="kpi"><b>${Object.keys(store.favs).length}</b><span>Favoritos</span></div><div class="kpi"><b>${Object.keys(store.hist).length}</b><span>Días registrados</span></div><div class="kpi"><b>${avg??'—'}</b><span>Nota media llevada</span></div><div class="kpi"><b>${up} · ${down}</b><span>Me gusta · no</span></div>${neverWorn!=null?`<div class="kpi"><b>${neverWorn}</b><span>Prendas sin llevar</span></div>`:''}</div>
+ <div class="kpis"><div class="kpi"><b>${Object.keys(store.favs).length}</b><span>Favoritos</span></div><div class="kpi"><b>${histDays()}</b><span>Días registrados</span></div><div class="kpi"><b>${avg??'—'}</b><span>Nota media llevada</span></div><div class="kpi"><b>${up} · ${down}</b><span>Me gusta · no</span></div>${neverWorn!=null?`<div class="kpi"><b>${neverWorn}</b><span>Prendas sin llevar</span></div>`:''}</div>
  <div class="stcard"><h3>Colores de tu armario</h3><div class="colbar">${famList.map(([f,n])=>`<div style="width:${100*n/totalF}%;background:${famCol(f)}" title="${famName(f)}: ${n}"></div>`).join('')}</div><div class="collg">${famList.slice(0,12).map(([f,n])=>`<span><i style="background:${famCol(f)}"></i>${famName(f)} ${n}</span>`).join('')}</div></div>
  <div class="stgrid">
   <div class="stcard"><h3>Prendas comodín</h3><p>Las que combinan con más pantalones, calzado y calcetines.</p><ul class="rank">${top.map(([v,id,p])=>li(v,id,p,100,p+'%')).join('')}</ul></div>
@@ -1852,7 +1872,7 @@ const render=renderAll;
 function outfitOfDay(){
  const vars=curVars(),now=new Date();
  const recent={},recentKeys=new Set();
- Object.entries(store.hist).forEach(([d,h])=>{const days=(now-new Date(d+'T12:00:00'))/864e5;if(days<=14)recentKeys.add(h.key);if(days<=3)Object.values(h.o||{}).forEach(id=>{if(id)recent[id]=1;});});
+ Object.entries(store.hist).forEach(([d,h])=>{const days=(now-new Date(d.slice(0,10)+'T12:00:00'))/864e5;if(days<=14)recentKeys.add(h.key);if(days<=3)Object.values(h.o||{}).forEach(id=>{if(id)recent[id]=1;});});
  const empty={p:null,b:null,m:null,c:null,s:null,k:null,w:null};
  let best=null,bs=-1;
  for(let i=0;i<120;i++){let c=0;search(vars,baseDoms(vars,null,empty),as=>{
@@ -1880,11 +1900,11 @@ document.addEventListener('click',async e=>{
   const vars=curVars(),k=curKey(),o={};vars.forEach(v=>o[v]=sel[v]);
   const a=act.dataset.act;
   if(a==='fav'){const id=favIdOf(k);if(store.favs[id]){await del('favs',id);toast('Quitado de favoritos');}else{await put('favs',id,{o,mode,key:k,at:new Date().toISOString()});toast('Guardado en favoritos');}}
-  if(a==='wear'){await put('hist',today(),{o,mode,key:k,at:new Date().toISOString()});toast('Apuntado en el historial de hoy');}
+  if(a==='wear'){if(wornToday(k)){toast('Este conjunto ya está apuntado hoy');}else{await put('hist',histId(),{o,mode,key:k,at:new Date().toISOString()});toast('Apuntado en el historial de hoy');}}
   if(a==='up'||a==='down'){const id=likeIdOf(k),v=a==='up'?1:-1;if(store.likes[id]&&store.likes[id].v===v){await del('likes',id);toast('Valoración quitada');}else{await put('likes',id,{o,mode,key:k,v,at:new Date().toISOString()});toast(v>0?'Anotado: te gusta. La nota lo tendrá en cuenta.':'Anotado: no te gusta. La nota lo tendrá en cuenta.');}}
   return;}
  const ld=t.closest('[data-load]');if(ld){const src=ld.dataset.load==='fav'?store.favs[ld.dataset.id]:store.hist[ld.dataset.id];if(src){wxs.clear();occs.clear();mode=src.mode;sel={p:null,b:null,m:null,c:null,s:null,k:null,w:null};Object.keys(src.o).forEach(v=>{const id=v==='k'&&src.o[v]?kid(src.o[v]):src.o[v];if(id&&DOM[v]&&DOM[v].includes(id))sel[v]=id;});if(Object.keys(src.o).some(v=>src.o[v]&&!sel[v]))toast('Este conjunto lleva alguna prenda retirada; elige otra para completarlo.');view='probador';save();renderAll();window.scrollTo({top:0});}return;}
- const wf=t.closest('[data-wearfav]');if(wf){const f=store.favs[wf.dataset.wearfav];if(f){await put('hist',today(),{o:f.o,mode:f.mode,key:f.key,at:new Date().toISOString()});toast('Apuntado en el historial de hoy');}return;}
+ const wf=t.closest('[data-wearfav]');if(wf){const f=store.favs[wf.dataset.wearfav];if(f){if(wornToday(f.key)){toast('Este conjunto ya está apuntado hoy');}else{await put('hist',histId(),{o:f.o,mode:f.mode,key:f.key,at:new Date().toISOString()});toast('Apuntado en el historial de hoy');}}return;}
  const df=t.closest('[data-delfav]');if(df){await del('favs',df.dataset.delfav);toast('Quitado de favoritos');return;}
  const dh=t.closest('[data-delhist]');if(dh){await del('hist',dh.dataset.delhist);toast('Quitado del historial');return;}
  const dc=t.closest('[data-delcu]');if(dc){const id=dc.dataset.delcu;if(dc.dataset.confirm!=='1'){dc.dataset.confirm='1';dc.textContent='¿Seguro? Pulsa otra vez';setTimeout(()=>{if(dc.isConnected){dc.dataset.confirm='';dc.textContent='Borrar';}},3000);return;}await del('custom',id);toast('Prenda borrada');return;}
