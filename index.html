@@ -769,7 +769,8 @@ const FIXEDCU={
  v_bCielo:{type:'bermuda',fam:'azulclaro',c:'#9DC3E6',n:'Bermuda azul cielo'},
  v_bAcero:{type:'bermuda',fam:'azul',c:'#4A5C7C',n:'Bermuda azul acero'},
  v_bMarino:{type:'bermuda',fam:'marino',c:'#1E2840',n:'Bermuda marino'},
- v_bMarron:{type:'bermuda',fam:'negro',c:'#1C1C1F',n:'Bermuda negra'}
+ v_bMarron:{type:'bermuda',fam:'negro',c:'#1C1C1F',n:'Bermuda negra'},
+ v_cargoGris:{type:'cargo',fam:'antracita',c:'#5A5F5C',n:'Cargo gris oscuro Dustin'}
 };
 
 /* ---------- Listas fijas ---------- */
@@ -942,11 +943,12 @@ function pantSock(p,k){
  if(isCU(p)&&CU[p].pk==='short')return ['tobill','nikeBl','invis','none'].includes(k);
  if(k==='nikeBl'&&DRESSP.has(p))return false;
  if(k==='tobill'||k==='nikeBl')return true;
+ if(K2.exec&&isCU(p)&&['cargo','bermuda','lino'].includes(CU[p].type))return false;
  if(K2.exec)return !['levis','levisB','leeClaro','dustinClaro','grisaceo','wrangler'].includes(p)&&!(isCU(p)&&['short'].includes(CU[p].pk));
  if(k==='none'||k==='invis')return true;
  const pf=famOf('p',p),kf=famOf('k',k);
  if(pf&&kf&&(pf===kf||(['gris','antracita'].includes(pf)&&['gris','antracita'].includes(kf))))return false;
- if(K2.dress&&!['negro','marino','gris','denim','camel','beige','crema'].includes(pf))return false;
+ if(K2.dress&&!['negro','marino','gris','antracita','denim','camel','beige','crema'].includes(pf))return false;
  if(['marino','negro'].includes(kf)&&['marino','negro','denim'].includes(pf))return false;
  return true;
 }
@@ -2002,7 +2004,7 @@ initAI();
 
 </script>
 
-<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 5 nov · 12:40</p>
+<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 6 nov · 18:45</p>
 <script>
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).catch(()=>{});});}
 </script>
