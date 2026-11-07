@@ -770,7 +770,8 @@ const FIXEDCU={
  v_bAcero:{type:'bermuda',fam:'azul',c:'#4A5C7C',n:'Bermuda azul acero'},
  v_bMarino:{type:'bermuda',fam:'marino',c:'#1E2840',n:'Bermuda marino'},
  v_bMarron:{type:'bermuda',fam:'negro',c:'#1C1C1F',n:'Bermuda negra'},
- v_cargoGris:{type:'cargo',fam:'antracita',c:'#5A5F5C',n:'Cargo gris oscuro Dustin'}
+ v_cargoGris:{type:'cargo',fam:'antracita',c:'#5A5F5C',n:'Cargo gris oscuro Dustin'},
+ v_teeScalpers:{type:'camiseta',fam:'crema',c:'#EEE8DA',p:'#6E1F2D',pc:1,n:'Camiseta crema Scalpers',note:'Espalda: Scalpers Co. Sport & Healthy Company en granate',back:{d:'Scalpers Co. Sport & Healthy Company en granate',f:['burdeos'],big:1}}
 };
 
 /* ---------- Listas fijas ---------- */
@@ -1092,7 +1093,7 @@ function shirtDraw(c,f,linen){
 }
 function baseSVG(id){
  if(SH[id])return shirtDraw(SH[id].c,SH[id].pat?`url(#pt-${id})`:SH[id].c);
- if(isCU(id)){const o=CU[id];if(o.t==='shirt')return shirtDraw(o.c,o.c,o.type==='camisalino');return topSVG({t:o.t,c:o.c});}
+ if(isCU(id)){const o=CU[id];if(o.t==='shirt')return shirtDraw(o.c,o.c,o.type==='camisalino');if(o.pc)return topSVG({t:o.t,c:o.c})+`<rect x="80" y="52" width="40" height="6" rx="1.5" fill="${o.p}"/><rect x="86" y="61" width="28" height="3.5" rx="1" fill="${o.p}"/><rect x="90" y="67" width="20" height="3" rx="1" fill="${o.p}"/>`;return topSVG({t:o.t,c:o.c,p:o.p});}
  return topSVG(T[id]);
 }
 function midDraw(o){
@@ -1392,9 +1393,10 @@ function scoreOf(o,vars,opts){
   const kf=famOf('k',o.k),K2=info('k',o.k);
   if((K2.short||K2.sport)&&has('p')&&isCU(o.p)&&CU[o.p].pk==='short')add(4,'Calcetín corto o deportivo, como piden las bermudas');
   if(K2.sport&&has('s')&&['run','terr'].includes(kindOf(o.s)))add(3,'Calcetín deportivo con zapatilla');
-  const bv=(has('m')&&!has('c')&&info('m',o.m).back)||(has('b')&&!has('m')&&!has('c')&&T[o.b]&&T[o.b].back);
+  const bv=(has('m')&&!has('c')&&info('m',o.m).back)||(has('b')&&!has('m')&&!has('c')&&info('b',o.b)&&info('b',o.b).back);
   const kacc=K2.acc||[];
-  if(bv&&((kf&&bv.f.includes(kf))||kacc.some(a=>bv.f.includes(a))))add(4,'El calcetín repite un color del estampado de la espalda');
+  const kBack=!!(bv&&((kf&&bv.f.includes(kf))||kacc.some(a=>bv.f.includes(a))));
+  if(kBack)add(4,'El calcetín repite un color del estampado de la espalda');
   if(K2.exec){if(has('s')&&shoeFz(o.s)>=3)add(6,'Media ejecutiva con zapato de vestir');else add(2,'Media ejecutiva, sobria y elegante');}
   else if(o.k==='none'){if(has('s')&&SUMMERSHOE(o.s))add(3,'Sin calcetín, como pide el calzado de verano');}
   else if(o.k==='invis')add(-3,'Se pierde el toque del calcetín');
@@ -1402,10 +1404,10 @@ function scoreOf(o,vars,opts){
   else if(kacc.some(a=>cloth.some(x=>x.f===a||(a==='verde'&&x.f==='oliva'))||shoeF===a))add(5,'El dibujo del calcetín recoge un color del conjunto');
   else if(K2.dress&&has('s')&&shoeFz(o.s)>=3)add(4,'Calcetín fino, va con zapato de vestir');
   else if(['marino','gris','negro','antracita'].includes(kf))add(1,'Calcetín discreto');
-  else add(-2,'El calcetín no repite ningún color');
+  else if(!kBack)add(-2,'El calcetín no repite ningún color');
   if(K2.loud){if(accs.length===0)add(3,'Calcetín alegre sobre base sobria');else add(-4,'Calcetín llamativo con mucho color arriba');}
  }
-{const bv=(has('m')&&!has('c')&&info('m',o.m).back)||(has('b')&&!has('m')&&!has('c')&&T[o.b]&&T[o.b].back);
+{const bv=(has('m')&&!has('c')&&info('m',o.m).back)||(has('b')&&!has('m')&&!has('c')&&info('b',o.b)&&info('b',o.b).back);
   if(bv&&bv.big){const pa=has('p')&&ACC.has(famOf('p',o.p)),loud=has('k')&&info('k',o.k).loud;
    if(pa||loud)add(-4,'Espalda muy estampada: mejor pantalón y calcetín sobrios');else if(has('p'))add(3,'La espalda estampada manda y el resto acompaña');}}
  const fz=[];['b','m','c'].forEach(v=>{if(has(v)&&!(v==='b'&&has('m')&&!['full','collar'].includes(bvis)))fz.push(fzTop(v,o[v]));});if(has('s'))fz.push(shoeFz(o.s));
@@ -2004,7 +2006,7 @@ initAI();
 
 </script>
 
-<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 6 nov · 18:45</p>
+<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 7 nov · 09:35</p>
 <script>
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).catch(()=>{});});}
 </script>
