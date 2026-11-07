@@ -2006,7 +2006,7 @@ initAI();
 
 </script>
 
-<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 7 nov · 09:50</p>
+<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 7 nov · 10:00</p>
 <script>
 const T={
  polosudLac:{n:'Polo-sudadera Lacoste marino',t:'polosweat',c:'#1F2A47'},
@@ -2374,6 +2374,14 @@ const SK={
  petSol:{n:'Petróleo con sol y calavera, puño naranja',c:'#1E8A9C',pat:'motif',p:['#E8B92E','#E2582E','#1A1A1A'],cf:'#E2582E',fam:'petroleo',acc:['coral','mostaza'],loud:1,g:'Colores vivos'},
  rayasLana:{n:'Rayas de lana gris, coral y celeste',c:'#A9ADB3',pat:'stripes',p:['#E6957E','#B9D2EC','#F2F2F0'],cf:'#1C2440',fam:'gris',acc:['coral','azulclaro'],warm:1,g:'Colores vivos'},
  /* Navidad */
+ bnAzul:{n:'Benetton azul con logos y lunares',note:'pack Benetton',c:'#3A3FA0',pat:'logos',p:['#C8423A','#3FA07E','#E8A27A'],fam:'azul',acc:['rojo','verde','coral'],loud:1,g:'Colores vivos'},
+ bnMarino:{n:'Benetton marino con logo verde agua y lunares',note:'pack Benetton',c:'#23253C',pat:'logos',p:['#6CC4B0','#C8423A','#E8A27A'],fam:'marino',acc:['verde'],g:'Marino'},
+ bnMarron:{n:'Benetton marrón con logo mostaza y lunares',note:'pack Benetton',c:'#6B4C42',pat:'logos',p:['#E0B23A','#E8A27A','#F0D8C0'],fam:'marron',acc:['mostaza'],g:'Marrón'},
+ bnGris:{n:'Benetton gris oscuro con logos mostaza y verde agua',note:'pack Benetton',c:'#3F3B4A',pat:'logos',p:['#E0B23A','#6CC4B0','#E8A27A'],fam:'antracita',acc:['mostaza','verde'],g:'Gris'},
+ rbMarino:{n:'Rombos marino con líneas celestes',note:'pack de rombos, fino',c:'#1E2236',pat:'lattice',p:['#8FB8D8'],fam:'marino',acc:['azulclaro'],dress:1,g:'Marino'},
+ rbRojo:{n:'Rombos marino con líneas rojas',note:'pack de rombos, fino',c:'#2A2C55',pat:'lattice',p:['#D8443A'],fam:'marino',acc:['rojo'],dress:1,g:'Marino'},
+ rbGris:{n:'Rombos gris tono sobre tono',note:'pack de rombos, fino',c:'#7A7C80',pat:'lattice',p:['#5E6064'],fam:'gris',dress:1,g:'Gris'},
+ rbBurdeos:{n:'Rombos burdeos con líneas azules',note:'pack de rombos, fino',c:'#7A1F35',pat:'lattice',p:['#4A5BC8'],fam:'burdeos',acc:['azul'],dress:1,g:'Burdeos y rojo'},
  xNoel:{n:'Lana coral de Papá Noel',note:'navideño',c:'#E0584A',pat:'motif',p:['#F2F2F0'],fam:'rojo',loud:1,warm:1,xmas:1,g:'Navidad'},
  xHoHo:{n:'Rojo «Ho Ho»',note:'navideño',c:'#D8302A',pat:'motif',p:['#F2F2F0'],fam:'rojo',loud:1,xmas:1,g:'Navidad'},
  /* Cortos, deportivos y sin calcetín */
@@ -2385,7 +2393,7 @@ const SK={
 /* ids antiguos (favoritos e historial guardados) */
 const KALIAS={mPajaros:'mTrazos',marinoD:'mTrazos',grisD:'gNaranja',negroD:'nMostaza',burdeos:'burLiso',verde:'vLiso',rojo:'xHoHo',rayas:'nRayas',vivo:'aTopos'};
 const kid=id=>SK[id]||isCU(id)?id:(KALIAS[id]||id);
-const KGROUPS=['Lisos y de vestir','Marino','Negro','Gris','Burdeos y rojo','Verde','Colores vivos','Navidad','Cortos y deportivos'];
+const KGROUPS=['Lisos y de vestir','Marino','Negro','Gris','Marrón','Burdeos y rojo','Verde','Colores vivos','Navidad','Cortos y deportivos'];
 const FAM={teeGods:'negro',teeMarron:'marron',teeCoral:'coral',teeEme:'blanco',teeVerdoso:'gris',teeEsnz:'blanco',teeYuxi:'azul',teePerla:'gris',teeCorona:'blanco',teeLacMar:'marino',teeTommy:'marino',teeFG:'marino',teeShed:'gris',teeMalva:'malva',teeSalvia:'salvia',teeGodsBl:'blanco',
  poloBur:'burdeos',poloVB:'verde',poloGJ:'gris',poloGant:'burdeos',poloBlanco:'blanco',poloTommy:'marino',poloRosa:'rosa',poloCielo:'azulclaro',poloMenta:'menta',poloCoral:'coral',poloEsm:'verde',poloMarLac:'marino',
  hOliva:'oliva',hIndigo:'indigo',hRLac:'marino',hCCW:'marino',hPerla:'gris',hAntra:'antracita',hMalva:'malva',hTopo:'gris',hTopoOsc:'marron',hGrisLav:'gris',
@@ -2968,6 +2976,8 @@ function sock2(id){
   if(k.pat==='motif')[[5,256],[16,255],[10,263],[19,266],[4,267]].forEach(([dx,dy],i)=>{s+=`<path d="M${x+dx},${dy-2.2} l2.2,2.2 l-2.2,2.2 l-2.2,-2.2Z" fill="${P2[i%P2.length]}"/>`;});
   if(k.pat==='logo')s+=`<circle cx="${x+12}" cy="262" r="2" fill="${P2[0]}"/>`;
   if(k.pat==='stripes')P2.concat(P2).slice(0,5).forEach((c,i)=>{s+=`<rect x="${x}" y="${252+i*3.6}" width="24" height="2" fill="${c}"/>`;});
+  if(k.pat==='lattice'){s+=`<path d="M${x},254 L${x+12},266 L${x+24},254 M${x},266 L${x+12},254 L${x+24},266" stroke="${P2[0]}" stroke-width="1" stroke-dasharray="1.2 1.2" fill="none"/>`;}
+  if(k.pat==='logos'){[[7,257],[17,264]].forEach(([dx,dy],i)=>{s+=`<circle cx="${x+dx}" cy="${dy}" r="2.4" fill="none" stroke="${P2[i%P2.length]}" stroke-width="1.2"/><path d="M${x+dx-2.4},${dy-3.4} l4.8,0" stroke="${P2[i%P2.length]}" stroke-width="1"/>`;});[[17,255],[5,266],[12,261]].forEach(([dx,dy])=>{s+=`<circle cx="${x+dx}" cy="${dy}" r="1" fill="${P2[2]||P2[0]}"/>`;});}
   if(k.pat==='argyle')[[6,255],[18,255],[12,261],[6,267],[18,267]].forEach(([dx,dy],i)=>{s+=`<path d="M${x+dx},${dy-3.6} l4.5,3.6 l-4.5,3.6 l-4.5,-3.6Z" fill="${P2[i%P2.length]}"/>`;});
   if(k.cf)s+=`<rect x="${x}" y="250" width="24" height="3.5" fill="${k.cf}"/>`;
  });return s;
