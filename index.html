@@ -643,14 +643,14 @@ const SK={
  petSol:{n:'Petróleo con sol y calavera, puño naranja',c:'#1E8A9C',pat:'motif',p:['#E8B92E','#E2582E','#1A1A1A'],cf:'#E2582E',fam:'petroleo',acc:['coral','mostaza'],loud:1,g:'Colores vivos'},
  rayasLana:{n:'Rayas de lana gris, coral y celeste',c:'#A9ADB3',pat:'stripes',p:['#E6957E','#B9D2EC','#F2F2F0'],cf:'#1C2440',fam:'gris',acc:['coral','azulclaro'],warm:1,g:'Colores vivos'},
  /* Navidad */
- bnAzul:{n:'Benetton azul con logos y lunares',note:'pack Benetton',c:'#3A3FA0',pat:'logos',p:['#C8423A','#3FA07E','#E8A27A'],fam:'azul',acc:['rojo','verde','coral'],loud:1,g:'Colores vivos'},
- bnMarino:{n:'Benetton marino con logo verde agua y lunares',note:'pack Benetton',c:'#23253C',pat:'logos',p:['#6CC4B0','#C8423A','#E8A27A'],fam:'marino',acc:['verde'],g:'Marino'},
- bnMarron:{n:'Benetton marrón con logo mostaza y lunares',note:'pack Benetton',c:'#6B4C42',pat:'logos',p:['#E0B23A','#E8A27A','#F0D8C0'],fam:'marron',acc:['mostaza'],g:'Marrón'},
- bnGris:{n:'Benetton gris oscuro con logos mostaza y verde agua',note:'pack Benetton',c:'#3F3B4A',pat:'logos',p:['#E0B23A','#6CC4B0','#E8A27A'],fam:'antracita',acc:['mostaza','verde'],g:'Gris'},
- rbMarino:{n:'Rombos marino con líneas celestes',note:'pack de rombos, fino',c:'#1E2236',pat:'lattice',p:['#8FB8D8'],fam:'marino',acc:['azulclaro'],dress:1,g:'Marino'},
- rbRojo:{n:'Rombos marino con líneas rojas',note:'pack de rombos, fino',c:'#2A2C55',pat:'lattice',p:['#D8443A'],fam:'marino',acc:['rojo'],dress:1,g:'Marino'},
- rbGris:{n:'Rombos gris tono sobre tono',note:'pack de rombos, fino',c:'#7A7C80',pat:'lattice',p:['#5E6064'],fam:'gris',dress:1,g:'Gris'},
- rbBurdeos:{n:'Rombos burdeos con líneas azules',note:'pack de rombos, fino',c:'#7A1F35',pat:'lattice',p:['#4A5BC8'],fam:'burdeos',acc:['azul'],dress:1,g:'Burdeos y rojo'},
+ bnGris:{n:'Benetton gris antracita con logos de colores',note:'logos mostaza, verde, azul y blanco; lunares beige',c:'#45464A',pat:'logos',p:['#E0B23A','#3FA05A','#D8BC90'],fam:'antracita',acc:['mostaza','verde','azul'],g:'Gris'},
+ bnMarino:{n:'Benetton marino con logos naranja y amarillo',note:'lunares beige',c:'#1F2A55',pat:'logos',p:['#E8782E','#E0C23A','#D8BC90'],fam:'marino',acc:['coral','mostaza'],g:'Marino'},
+ bnBurdeos:{n:'Benetton burdeos con logos de colores',note:'logos azul, naranja, blanco y mostaza; lunares beige',c:'#7E1F2C',pat:'logos',p:['#2E4FC8','#E8782E','#D8BC90'],fam:'burdeos',acc:['azul','coral'],g:'Burdeos y rojo'},
+ bnNegro:{n:'Benetton negro con logos rojo y verde',note:'lunares beige',c:'#18181A',pat:'logos',p:['#D8343A','#3FA05A','#D8BC90'],fam:'negro',acc:['rojo','verde'],g:'Negro'},
+ rbRojo:{n:'Rombos marino con líneas rojas',note:'pack de rombos, fino',c:'#1B2036',pat:'lattice',p:['#B8343A'],fam:'marino',acc:['rojo'],dress:1,g:'Marino'},
+ rbGris:{n:'Rombos gris antracita con líneas azules',note:'pack de rombos, fino',c:'#4A4B4F',pat:'lattice',p:['#5B8FD6'],fam:'antracita',acc:['azul'],dress:1,g:'Gris'},
+ rbNegro:{n:'Rombos negro con líneas verdes',note:'pack de rombos, fino',c:'#1A1A1C',pat:'lattice',p:['#3E8A5A'],fam:'negro',acc:['verde'],dress:1,g:'Negro'},
+ rbVerde:{n:'Rombos verde botella tono sobre tono',note:'pack de rombos, fino',c:'#2B4A31',pat:'lattice',p:['#1C3322'],fam:'verde',dress:1,g:'Verde'},
  xNoel:{n:'Lana coral de Papá Noel',note:'navideño',c:'#E0584A',pat:'motif',p:['#F2F2F0'],fam:'rojo',loud:1,warm:1,xmas:1,g:'Navidad'},
  xHoHo:{n:'Rojo «Ho Ho»',note:'navideño',c:'#D8302A',pat:'motif',p:['#F2F2F0'],fam:'rojo',loud:1,xmas:1,g:'Navidad'},
  /* Cortos, deportivos y sin calcetín */
@@ -660,7 +660,7 @@ const SK={
  none:{n:'Sin calcetines',note:'para verano',c:'#E3B897',none:1,g:'Cortos y deportivos'}
 };
 /* ids antiguos (favoritos e historial guardados) */
-const KALIAS={mPajaros:'mTrazos',marinoD:'mTrazos',grisD:'gNaranja',negroD:'nMostaza',burdeos:'burLiso',verde:'vLiso',rojo:'xHoHo',rayas:'nRayas',vivo:'aTopos'};
+const KALIAS={mPajaros:'mTrazos',marinoD:'mTrazos',grisD:'gNaranja',negroD:'nMostaza',burdeos:'burLiso',verde:'vLiso',rojo:'xHoHo',rayas:'nRayas',vivo:'aTopos',bnAzul:'bnMarino',bnMarron:'bnBurdeos',rbMarino:'rbNegro',rbBurdeos:'rbVerde'};
 const kid=id=>SK[id]||isCU(id)?id:(KALIAS[id]||id);
 const KGROUPS=['Lisos y de vestir','Marino','Negro','Gris','Marrón','Burdeos y rojo','Verde','Colores vivos','Navidad','Cortos y deportivos'];
 const FAM={teeGods:'negro',teeMarron:'marron',teeCoral:'coral',teeEme:'blanco',teeVerdoso:'gris',teeEsnz:'blanco',teeYuxi:'azul',teePerla:'gris',teeCorona:'blanco',teeLacMar:'marino',teeTommy:'marino',teeFG:'marino',teeShed:'gris',teeMalva:'malva',teeSalvia:'salvia',teeGodsBl:'blanco',
@@ -2035,7 +2035,7 @@ initStore();
 initAI();
 
 </script>
-<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 7 nov · 14:10</p>
+<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 9 nov · 13:40</p>
 <script>
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).catch(()=>{});});}
 </script>
