@@ -779,6 +779,7 @@ const FIXEDCU={
  v_bMarino:{type:'bermuda',fam:'marino',c:'#1E2840',n:'Bermuda marino'},
  v_bMarron:{type:'bermuda',fam:'negro',c:'#1C1C1F',n:'Bermuda negra'},
  v_cargoGris:{type:'cargo',fam:'antracita',c:'#5A5F5C',n:'Cargo gris oscuro Dustin'},
+ v_cargoPiedra:{type:'cargo',fam:'gris',c:'#A9A59C',n:'Cargo gris piedra Dustin'},
  v_teeScalpers:{type:'camiseta',fam:'crema',c:'#EEE8DA',p:'#6E1F2D',pc:1,n:'Camiseta crema Scalpers',note:'Espalda: Scalpers Co. Sport & Healthy Company en granate',back:{d:'Scalpers Co. Sport & Healthy Company en granate',f:['burdeos'],big:1}}
 };
 
@@ -989,7 +990,7 @@ function pair(va,a,vb,b){
   case 'ps':return pantShoe(a,b);
   case 'pk':return pantSock(a,b);
   case 'bm':{const tm=topType('m',b),tb=topType('b',a);
-    if((tm==='hoodie'||tm==='polosweat'||tm==='pshirt')&&tb!=='tee')return false;
+    if(tm==='pshirt'&&tb!=='tee')return false;if((tm==='hoodie'||tm==='polosweat')&&!['tee','polo'].includes(tb))return false;
     const fa=famOf('b',a),fb=famOf('m',b);
     if(fa===fb&&fa!=='blanco')return false;
     if(clash(fa,fb))return false;
@@ -1138,12 +1139,13 @@ function midSVG(id){if(T[id])return topSVG(T[id]);return midDraw(isCU(id)?CU[id]
 function baseVis(b,m){
  const tm=topType('m',m),tb=topType('b',b);
  if(tb==='shirt'||['zip','cardigan','hzip'].includes(tm))return 'full';
- if(tb==='polo')return ['hoodie','polosweat','pshirt'].includes(tm)?null:'collar';
+ if(tb==='polo')return tm==='pshirt'?null:'collar';
  return 'hem';
 }
 function cdist(a,b){const x=parseInt(a.slice(1),16),y=parseInt(b.slice(1),16);const d=[(x>>16)-(y>>16),((x>>8)&255)-((y>>8)&255),(x&255)-(y&255)];return Math.sqrt(d[0]*d[0]+d[1]*d[1]+d[2]*d[2]);}
 function peek(b,m){
  const tm=topType('m',m),tb=topType('b',b);
+ if(tb==='polo'&&(tm==='hoodie'||tm==='polosweat'))return `<path d="M84,14 L100,29 L92,35 L77,19Z M116,14 L100,29 L108,35 L123,19Z" fill="${info('b',b).c}" ${ST}/>`;
  if(tm==='zip'||tm==='polosweat'||tm==='pshirt'||tm==='cardigan')return '';
  if(tm==='hoodie')return tb==='tee'?`<path d="M88,24 Q100,34 112,24 L112,27 Q100,37 88,27Z" fill="${info('b',b).c}" ${ST}/>`:'';
  const col=info('b',b).c;
@@ -2035,7 +2037,7 @@ initStore();
 initAI();
 
 </script>
-<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 10 nov · 08:40</p>
+<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 16 nov · 18:10</p>
 <script>
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).catch(()=>{});});}
 </script>
