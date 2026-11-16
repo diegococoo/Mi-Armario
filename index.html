@@ -1277,7 +1277,7 @@ function figure(o,vars,ghost){
  s+=o.b?(clipB?`<g clip-path="url(#${fid}b)">${baseSVG(o.b)}</g>`:baseSVG(o.b)):g('b');
  const clipM=has('c')&&o.c&&o.m&&!['vest','vestp'].includes(info('c',o.c).k);
  if(clipM)s+=`<defs><clipPath id="${fid}m"><rect x="60" y="-16" width="80" height="200"/></clipPath></defs>`;
- if(has('m')){s+=o.m?(clipM?`<g clip-path="url(#${fid}m)">${midSVG(o.m)}</g>`:midSVG(o.m)):g('m');if(o.m&&o.b){s+=peek(o.b,o.m);if(info('b',o.b)&&topType('b',o.b)==='tee')s+=`<path d="M51,133 L149,133 L149,140 L51,140Z" fill="${info('b',o.b).c}" ${ST}/>`;}}
+ if(has('m')){s+=o.m?(clipM?`<g clip-path="url(#${fid}m)">${midSVG(o.m)}</g>`:midSVG(o.m)):g('m');if(o.m&&o.b){s+=peek(o.b,o.m);if(info('b',o.b)&&(topType('b',o.b)==='tee'||(topType('b',o.b)==='polo'&&topType('m',o.m)!=='pshirt')))s+=`<path d="M51,133 L149,133 L149,140 L51,140Z" fill="${info('b',o.b).c}" ${ST}/>`;}}
  if(has('c'))s+=o.c?coatSVG(o.c):g('c');
  if(has('w')&&o.w&&o.w!=='none'&&o.p&&!has('c')){const tm=has('m')&&o.m?topType('m',o.m):null;const tb=o.b?topType('b',o.b):null;if(!tm&&(tb==='shirt'||tb==='polo'))s+=beltDraw(o.w,55,134,90);}
  s+=o.s?shoe2(o.s):g('s');
@@ -1400,6 +1400,7 @@ function scoreOf(o,vars,opts){
    if(pb2>0)add(Math.min(6,pb2+1),`${zipOpen?'Lo de debajo y la capa':'Cuello y capa'} combinan (${famName(fb).toLowerCase()} y ${famName(fm).toLowerCase()})`);
    if(ACC.has(fb)&&!ACC.has(fm))add(4,qu+' pone el toque de color');
    else if(ACC.has(fb)&&ACC.has(fm)&&!pb2&&fb!==fm)add(-5,(zipOpen?'Lo de debajo y la capa':'Cuello y capa')+': dos colores fuertes que no casan');
+   if(tb==='polo'&&has('p')){const dp=cdist(info('b',o.b).c,info('p',o.p).c),fp=famOf('p',o.p);if(dp<40&&fp!==fb)add(-3,'El polo que asoma por abajo casi se funde con el pantalón');}
    else if(!ACC.has(fb)&&!ACC.has(fm)&&!pb2&&d<=150&&d>=45)add(-1,(zipOpen?'Lo de debajo y la capa':'Cuello y capa')+' en neutros sin mucha gracia');
   }
  }
@@ -2037,7 +2038,7 @@ initStore();
 initAI();
 
 </script>
-<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 16 nov · 18:10</p>
+<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 16 nov · 18:15</p>
 <script>
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).catch(()=>{});});}
 </script>
