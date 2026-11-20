@@ -767,7 +767,7 @@ const BE={
  beMarron:{n:'Cinturón de piel marrón oscuro',c:'#3E2A20',fam:'marron',fz:3,k:'leather',buckle:'#C9CCD1'},
  none:{n:'Sin cinturón',c:'#E8EAF0',fam:null,fz:2,k:'none'}
 };
-T.hEsenzia={n:'Capucha verde salvia Esenzia Après Ski',t:'hoodie',c:'#86A595',p:'#E3C75A'};FAM.hEsenzia='salvia';if(typeof SOCK!=='undefined')SOCK.hEsenzia=['mostaza','crema'];
+T.hEsenzia={n:'Capucha verde salvia Esenzia Après Ski',t:'hoodie',c:'#86A595',p:'#E3C75A'};FAM.hEsenzia='salvia';if(typeof SOCK!=='undefined')SOCK.hEsenzia=['mostaza','crema'];Object.values(GP).forEach(g=>{if(!g.tops.includes('hEsenzia'))g.tops.push('hEsenzia');});
 const FIXEDCU={
  v_linoBl:{type:'lino',fam:'blanco',c:'#F4F1E8',n:'Pantalón de lino blanco'},
  v_linoBe:{type:'lino',fam:'beige',c:'#DDD3BE',n:'Pantalón de lino beige'},
@@ -2039,7 +2039,7 @@ initStore();
 initAI();
 
 </script>
-<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 20 nov · 12:25</p>
+<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 20 nov · 12:35</p>
 <script>
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).catch(()=>{});});}
 </script>
