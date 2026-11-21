@@ -504,7 +504,7 @@ function cTS(t,s){
   if(s==='sl72'&&NOSL.has(t))return false;
   const k=SHOEK[s],ty=T[t].t;
   if(FORMAL.has(t))return k!=='run';
-  if(ty==='polo')return k!=='run'||s==='nb327';
+  if(ty==='polo')return true;
   if(ty==='hoodie')return k!=='formal';
   return true; /* camisetas y sudaderas: todo */
 }
@@ -1140,7 +1140,7 @@ function midSVG(id){if(T[id])return topSVG(T[id]);return midDraw(isCU(id)?CU[id]
 function baseVis(b,m){
  const tm=topType('m',m),tb=topType('b',b);
  if(tb==='shirt'||['zip','cardigan','hzip'].includes(tm))return 'full';
- if(tb==='polo')return tm==='pshirt'?null:'collar';
+ if(tb==='polo'){if(tm==='pshirt')return null;if(tm==='hoodie')return 'hem';return 'collar';}
  return 'hem';
 }
 function cdist(a,b){const x=parseInt(a.slice(1),16),y=parseInt(b.slice(1),16);const d=[(x>>16)-(y>>16),((x>>8)&255)-((y>>8)&255),(x&255)-(y&255)];return Math.sqrt(d[0]*d[0]+d[1]*d[1]+d[2]*d[2]);}
@@ -1388,21 +1388,23 @@ function scoreOf(o,vars,opts){
  if(pairSum)add(pairSum,`Combinación clásica (${best})`);
  if(bvis){
   const fb=famOf('b',o.b),fm=famOf('m',o.m),d=cdist(info('b',o.b).c,info('m',o.m).c),pb2=pairBonus(fb,fm);
-  const tb=topType('b',o.b),zipOpen=['hzip','zip','cardigan'].includes(topType('m',o.m)),qu=tb==='polo'?(zipOpen?'El polo que se ve por la cremallera':'El cuello del polo'):tb==='shirt'?'La camisa':(zipOpen?'La camiseta que se ve por la cremallera':'La camiseta');
+  const tb=topType('b',o.b),wq=tb==='polo'?'El polo':'La camiseta',zipOpen=['hzip','zip','cardigan'].includes(topType('m',o.m)),qu=tb==='polo'?(zipOpen?'El polo que se ve por la cremallera':'El cuello del polo'):tb==='shirt'?'La camisa':(zipOpen?'La camiseta que se ve por la cremallera':'La camiseta');
   if(bvis==='hem'){
-   if(pb2>0)add(Math.min(5,pb2+1),`La camiseta que asoma por abajo combina con la capa (${famName(fb).toLowerCase()} y ${famName(fm).toLowerCase()})`);
-   if(ACC.has(fb)&&ACC.has(fm)&&!pb2&&fb!==fm)add(-5,'La camiseta que asoma por abajo choca con la capa');
-   else if(ACC.has(fb)&&!ACC.has(fm))add(3,'La camiseta pone un toque de color por abajo');
-   else if(d<45&&fb!==fm)add(-2,'La camiseta se confunde con la capa');
-   if(has('p')){const dp=cdist(info('b',o.b).c,info('p',o.p).c),fp=famOf('p',o.p);if(dp<40&&fp!==fb)add(-3,'La camiseta que asoma casi se funde con el pantalón');}
+   if(pb2>0)add(Math.min(5,pb2+1),`${wq} que asoma por abajo combina con la capa (${famName(fb).toLowerCase()} y ${famName(fm).toLowerCase()})`);
+   if(ACC.has(fb)&&ACC.has(fm)&&!pb2&&fb!==fm)add(-5,wq+' que asoma por abajo choca con la capa');
+   else if(ACC.has(fb)&&!ACC.has(fm))add(3,wq+' pone un toque de color por abajo');
+   else if(d<45&&fb!==fm)add(-2,wq+' se confunde con la capa');
+   if(has('p')){const dp=cdist(info('b',o.b).c,info('p',o.p).c),fp=famOf('p',o.p);if(dp<40&&fp!==fb)add(-3,wq+' que asoma casi se funde con el pantalón');}
   }else{
    if(d<45)add(-6,qu+' se pierde: casi del mismo tono que la prenda de encima');
    else if(d>150)add(4,qu+' destaca bien sobre la capa de encima');
    if(pb2>0)add(Math.min(6,pb2+1),`${zipOpen?'Lo de debajo y la capa':'Cuello y capa'} combinan (${famName(fb).toLowerCase()} y ${famName(fm).toLowerCase()})`);
    if(ACC.has(fb)&&!ACC.has(fm))add(4,qu+' pone el toque de color');
    else if(ACC.has(fb)&&ACC.has(fm)&&!pb2&&fb!==fm)add(-5,(zipOpen?'Lo de debajo y la capa':'Cuello y capa')+': dos colores fuertes que no casan');
-   if(tb==='polo'&&has('p')){const dp=cdist(info('b',o.b).c,info('p',o.p).c),fp=famOf('p',o.p);if(dp<40&&fp!==fb)add(-3,'El polo que asoma por abajo casi se funde con el pantalón');}
    else if(!ACC.has(fb)&&!ACC.has(fm)&&!pb2&&d<=150&&d>=45)add(-1,(zipOpen?'Lo de debajo y la capa':'Cuello y capa')+' en neutros sin mucha gracia');
+   if(tb==='polo'&&!zipOpen){const ok=d>=45&&(pb2>0||d>150||(ACC.has(fb)&&!ACC.has(fm)));const bad=d<45||(ACC.has(fb)&&ACC.has(fm)&&!pb2&&fb!==fm);
+    if(ok)add(4,'El cuello del polo por fuera le da más estilo a la sudadera');else if(bad)add(-3,'El cuello del polo por fuera no le aporta: mejor camiseta debajo');}
+   if(tb==='polo'&&has('p')){const dp=cdist(info('b',o.b).c,info('p',o.p).c),fp=famOf('p',o.p);if(dp<40&&fp!==fb)add(-3,'El polo que asoma por abajo casi se funde con el pantalón');}
   }
  }
  const all=[...cloth.map(x=>x.f),shoeF].filter(Boolean);
@@ -1454,6 +1456,7 @@ function scoreOf(o,vars,opts){
   const dark=[info('c',o.c).c,...inner.map(x=>x.c),has('p')?info('p',o.p).c:null].filter(Boolean).every(c=>lum(c)<.06);
   if(dark)add(-5,'Todo muy oscuro, sin un punto de luz');}
  if(has('w')&&o.w!=='none'&&has('s')){const bt=beltTone(o.w),st=shoeTone(o.s);if(bt!=='otro'&&bt===st)add(4,'Cinturón a juego con el zapato');else if(o.w==='beTrenz'&&!SUMMERSHOE(o.s)&&shoeFz(o.s)<=2)add(2,'Cinturón trenzado, toque informal');}
+ if(has('b')&&!has('m')&&!has('c')&&has('s')&&topType('b',o.b)==='polo'&&kindOf(o.s)==='run'&&o.s!=='nb327')add(-3,'Polo a la vista con zapatilla de running: mejor con algo encima o con otra zapatilla');
  if(has('w')&&o.w==='none'&&has('p')&&(DRESSP.has(o.p)||pantFz(o.p)>=2)&&has('b')&&['shirt','polo'].includes(topType('b',o.b))&&!has('m'))add(-3,'Con camisa o polo por dentro pide cinturón');
  let nm=0;if(has('p')&&famOf('p',o.p)==='marino')nm++;['b','m','c'].forEach(v=>{if(has(v)&&famOf(v,o[v])==='marino')nm++;});
  if(nm===2)add(-2,'Bastante azul marino');
@@ -2039,7 +2042,7 @@ initStore();
 initAI();
 
 </script>
-<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 21 nov · 17:30</p>
+<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 21 nov · 17:40</p>
 <script>
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).catch(()=>{});});}
 </script>
