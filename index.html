@@ -762,9 +762,9 @@ const PALC=Object.fromEntries(PALETTE.map(([f,c])=>[f,c]));
 const BE={
  beAnte:{n:'Cinturón de ante camel con pespunte',c:'#B07A45',fam:'camel',fz:1,k:'suede',stitch:1},
  beCuero:{n:'Cinturón de piel marrón envejecido',c:'#6B3A22',fam:'marron',fz:1,k:'leather'},
- beNegro:{n:'Cinturón negro grabado (reversible verde)',c:'#1C1C1F',fam:'negro',fz:3,k:'leather',buckle:'#C9CCD1',tex:1},
+ beNegro:{n:'Cinturón negro grabado (reversible verde)',c:'#1C1C1F',fam:'negro',fz:2,k:'leather',buckle:'#C9CCD1',tex:1},
  beTrenz:{n:'Cinturón trenzado marino con bandera de España',c:'#1F2A55',fam:'marino',fz:1,k:'braid',p:['#C8302B','#E5C437']},
- beMarron:{n:'Cinturón de piel marrón oscuro',c:'#3E2A20',fam:'marron',fz:3,k:'leather',buckle:'#C9CCD1'},
+ beMarron:{n:'Cinturón de piel marrón oscuro',c:'#3E2A20',fam:'marron',fz:2,k:'leather',buckle:'#C9CCD1'},
  none:{n:'Sin cinturón',c:'#E8EAF0',fam:null,fz:2,k:'none'}
 };
 T.hEsenzia={n:'Capucha verde salvia Esenzia Après Ski',t:'hoodie',c:'#86A595',p:'#E3C75A'};FAM.hEsenzia='salvia';if(typeof SOCK!=='undefined')SOCK.hEsenzia=['mostaza','crema'];Object.values(GP).forEach(g=>{if(!g.tops.includes('hEsenzia'))g.tops.push('hEsenzia');});
@@ -2039,7 +2039,7 @@ initStore();
 initAI();
 
 </script>
-<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 20 nov · 12:35</p>
+<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 21 nov · 17:30</p>
 <script>
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).catch(()=>{});});}
 </script>
