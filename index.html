@@ -898,7 +898,13 @@ function pantTop(p,v,id){
   if(clash(f,pf))return false;
   if(CU[p].pk==='short'&&fzTop(v,id)>=3&&topType(v,id)!=='shirt')return false;
   return true;}
- if(isT(id))return GP[p].tops.includes(id);
+ if(isT(id)){
+  if(GP[p].tops.includes(id))return true;
+  const pf=famOf('p',p);
+  if(GP[p].ban.includes(f)||clash(f,pf))return false;
+  if(f===pf&&!['blanco','gris','denimclaro'].includes(f))return false;
+  return cdist(info(v,id).c,info('p',p).c)>=45;
+ }
  return !PBAN[p].includes(f);
 }
 function shoeTop(v,t,s){
@@ -943,7 +949,17 @@ function pantShoe(p,s){
  if(isCU(p)&&['short','lino'].includes(CU[p].pk)){const kind=isCU(s)?CU[s].sk:S[s].k;if(['boot','hi'].includes(kind)||['oxford','oxfordNeg'].includes(s))return false;if(CU[p].pk==='short'){const pf=famOf('p',p),sf=famOf('s',s);return !(pf===sf&&ACC.has(pf));}}
  if(isCU(p)&&CU[p].type==='chino'&&kindOf(s)==='run')return false;
  if(DRESSP.has(p)&&(shoeFz(s)===1||['hi','boot','esp','esploafer','clog','sandal'].includes(kindOf(s))))return false;
- if(!isCU(p)&&!isCU(s))return NEWSHOEPANT[s]?NEWSHOEPANT[s].includes(p):GP[p].shoes.includes(s);
+ if(!isCU(p)&&!isCU(s)){
+  if(NEWSHOEPANT[s]?NEWSHOEPANT[s].includes(p):GP[p].shoes.includes(s))return true;
+  const k=kindOf(s);
+  if(DRESSP.has(p)||shoeFz(s)>=3||!['formal','terr','run','canvas'].includes(k))return false;
+  if(k==='run'&&pantFz(p)>=2)return false;
+  const pf=famOf('p',p),sf=famOf('s',s);
+  if(pf===sf&&pf!=='negro')return false;
+  if(clash(sf,pf))return false;
+  if(cdist(info('p',p).c,info('s',s).c)<45&&!(pf==='negro'&&sf==='negro'))return false;
+  return true;
+ }
  if(Math.abs(pantFz(p)-shoeFz(s))>1)return false;
  const pf=famOf('p',p),sf=famOf('s',s);
  if(pf===sf&&ACC.has(pf))return false;
@@ -2051,7 +2067,7 @@ initStore();
 initAI();
 
 </script>
-<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 22 nov · 13:10</p>
+<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 22 nov · 13:30</p>
 <script>
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).catch(()=>{});});}
 </script>
