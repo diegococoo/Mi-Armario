@@ -28,6 +28,19 @@
 .trow .tth svg{width:100%;height:100%;display:block}
 .trow .tnm{font-size:14px;line-height:1.25}.trow .tnm small{display:block;color:var(--muted);font:400 11.5px var(--mono)}
 .trow.done .tnm{text-decoration:line-through;opacity:.5}
+.ttabs{display:flex;gap:6px;margin:0 0 12px}
+.thints{list-style:none;margin:8px 0 4px;padding:0;display:flex;flex-wrap:wrap;gap:6px}
+.thints li{font:500 12px var(--body);border:1px solid var(--line);border-radius:999px;padding:3px 10px;color:var(--muted)}
+.thints li b{font-weight:800}.thints li.ok{border-color:var(--ok);color:var(--ok)}.thints li.mid{border-color:#B8862E;color:#8A6420}.thints li.no{border-color:var(--accent);color:var(--accent)}
+.thint.warn{color:var(--accent)}
+.tit{position:relative;display:flex;flex-direction:column;gap:4px;text-align:center;background:var(--card);border:1.5px solid var(--line);border-radius:8px;padding:6px 4px 8px;font:500 11.5px/1.2 var(--body);color:var(--ink);cursor:pointer;min-width:0}
+.tit .th{background:var(--stage);border-radius:6px;padding:4px;height:64px}.tit .th svg{width:100%;height:100%;display:block}
+.tit.on{border-color:var(--accent);background:var(--accent-soft)}
+.tit.zero{opacity:.45}
+.tcn{position:absolute;top:4px;left:4px;font:700 10.5px var(--mono);background:var(--ink);color:var(--paper);border-radius:999px;padding:1px 6px}
+.tit.zero .tcn{background:var(--accent)}
+.tck{position:absolute;top:4px;right:4px;font:800 12px var(--body);background:var(--accent);color:var(--paper);border-radius:999px;width:18px;height:18px;line-height:18px}
+.ocard .m li.sug{font-style:italic}
 </style>
 </head>
 <body>
@@ -2155,13 +2168,15 @@ initStore();
 initAI();
 
 
-/* ---------- Modo viaje: maleta cápsula + outfits por días + lista con casillas ---------- */
+/* ---------- Modo viaje: tú eliges las prendas y la app te dice qué combina ---------- */
 const TRIPLS='probador-viaje';
-let trip={days:5,wx:['templado'],maxS:3,plan:[],checked:{}};
+let trip={days:5,wx:['templado'],pick:{},only:true,tab:'pick',plan:[],checked:{}};
 try{const v=JSON.parse(localStorage.getItem(TRIPLS)||'null');if(v)trip=Object.assign(trip,v);}catch(e){}
+if(!trip.pick||Array.isArray(trip.pick))trip.pick={};
 const tripSave=()=>{try{localStorage.setItem(TRIPLS,JSON.stringify(trip));}catch(e){}};
 const TGROUPS=[['p','Pantalones'],['b','Camisetas, polos y camisas'],['m','Sudaderas y jerseys'],['c','Abrigos'],['s','Calzado'],['w','Cinturones'],['k','Calcetines']];
 const TEXTRA=[['Ropa interior',d=>d+1],['Pijama',()=>1],['Neceser',()=>1],['Cargador y móvil',()=>1],['Documentación y billetes',()=>1]];
+const tripPicked=(v)=>trip.pick[v]||(trip.pick[v]=[]);
 
 /* ejecuta fn con el tiempo y la ocasión de un día del viaje, y deja todo como estaba */
 function tripCtx(day,fn){
@@ -2171,38 +2186,55 @@ function tripCtx(day,fn){
  mode=1;mode=defMode();if(!modesAllowed().includes(mode))mode=modesAllowed()[0];
  try{return fn(MODES[mode].vars,mode);}finally{wxs=sw;occs=so;mode=sm;}
 }
-function tripLimits(days){
- const n=days.length,anyF=days.some(d=>d.formal);
- const cold=trip.wx.includes('frio');
- /* con frío se llevan más capas (sudaderas y jerseys) para alternar, y un segundo abrigo en viajes largos */
- return {p:(n<=2?1:n<=4?2:n<=8?3:4)+(anyF&&n>=3?1:0),s:trip.maxS,m:cold?Math.min(7,Math.ceil(n/2)+1):Math.min(4,Math.ceil(n/3)),c:cold&&n>=6?2:1,w:n<=3?1:2};
+/* cuántas prendas de cada tipo suelen hacer falta */
+function tripRec(n,cold){
+ return {p:n<=2?1:n<=4?2:n<=8?3:4,b:n,m:cold?Math.min(7,Math.ceil(n/2)+1):Math.min(4,Math.ceil(n/3)),c:cold&&n>=6?2:1,s:n<=2?2:3};
 }
-const TRELAX=['w','m','c','p','s'];
-/* genera el outfit de un día respetando lo que ya hay en la maleta */
-function tripDayGen(day,others,lim,prevO,avoidKey){
+const TEMPTY=()=>({p:null,b:null,m:null,c:null,s:null,k:null,w:null});
+
+/* cálculo del seleccionador: cuántos conjuntos salen y cuántos añade cada prenda */
+function tripCalc(){
+ return tripCtx(null,(vars,md)=>{
+  const core=vars.filter(v=>!['k','w'].includes(v)),empty=TEMPTY();
+  const pick={};ORDER.forEach(v=>{const dv=vars.includes(v)?dom(v):[];pick[v]=new Set((trip.pick[v]||[]).filter(id=>dv.includes(id)));});
+  const cnt=(v,id,cap)=>{
+   const vs=core.includes(v)?core:[...core,v];const d0=baseDoms(vs,null,empty);
+   vs.forEach(w=>{if(w===v)d0[w]=[id];else if(pick[w].size)d0[w]=d0[w].filter(x=>pick[w].has(x));});
+   if(vs.some(w=>!d0[w].length))return 0;
+   let n=0;search(vs,d0,()=>{n++;return n>=cap;});return n;};
+  const tiles={};
+  vars.forEach(v=>{tiles[v]={};dom(v).forEach(id=>{if(id==='none'&&!['k','w'].includes(v))return;tiles[v][id]=cnt(v,id,99);});});
+  const dT=baseDoms(core,null,empty);core.forEach(v=>{if(pick[v].size)dT[v]=dT[v].filter(x=>pick[v].has(x));});
+  let total=0;if(!core.some(v=>!dT[v].length))search(core,dT,()=>{total++;return total>=3000;});
+  const cold=trip.wx.includes('frio');
+  return {vars,md,core,pick,tiles,total,rec:tripRec(trip.days,cold)};
+ });
+}
+
+/* outfit de un día usando solo lo que has elegido (si una categoría no tiene nada elegido, la app propone) */
+function tripDayGen(day,others,prevO,avoidKey){
  return tripCtx(day,(vars,md)=>{
-  const empty={p:null,b:null,m:null,c:null,s:null,k:null,w:null};
-  const chosen={};ORDER.forEach(v=>chosen[v]=new Set());
-  others.forEach(d=>{ORDER.forEach(v=>{if(d.o[v]&&d.o[v]!=='none')chosen[v].add(d.o[v]);});});
-  const usedTops=new Set(others.map(d=>d.o.b).filter(Boolean));
+  const empty=TEMPTY(),pick={};
+  ORDER.forEach(v=>pick[v]=new Set(trip.pick[v]||[]));
+  const use={};others.forEach(d=>ORDER.forEach(v=>{const id=d.o[v];if(id&&id!=='none')use[id]=(use[id]||0)+1;}));
   const relax=new Set();
-  for(let step=0;step<=TRELAX.length;step++){
+  for(let step=0;step<=vars.length;step++){
    const d0=baseDoms(vars,null,empty);
-   vars.forEach(v=>{if(lim[v]!==undefined&&chosen[v].size>=lim[v]&&!relax.has(v)){const f=d0[v].filter(id=>chosen[v].has(id));d0[v]=f;}});
-   if(d0.b){const f=d0.b.filter(id=>!usedTops.has(id));if(f.length)d0.b=f;}
+   vars.forEach(v=>{if(pick[v].size&&!relax.has(v)){d0[v]=d0[v].filter(id=>pick[v].has(id));}});
    if(vars.every(v=>d0[v].length)){
     let best=null,bs=-1e9,bsc=0;
     for(let i=0;i<14;i++){let c=0;search(vars,d0,as=>{
      const key=okey(as,vars);if(key===avoidKey)return ++c>=6;
      const r=scoreOf(as,vars);if(!r)return ++c>=6;
      let s=r.s+Math.random()*2.5;
-     ['p','s','m','c'].forEach(v=>{if(as[v]&&chosen[v].has(as[v]))s+=1.5;});
+     ['p','b','m','c','s','w'].forEach(v=>{const id=as[v];if(id&&id!=='none'&&use[id])s-=(v==='b'?5:1.5)*use[id];});
      if(prevO){if(prevO.p&&prevO.p===as.p&&prevO.s===as.s)s-=5;if(prevO.m&&prevO.m===as.m)s-=3;}
      if(s>bs){bs=s;bsc=r.s;best=Object.assign({},as);}
      return ++c>=6;},true);}
     if(best){const o={};ORDER.forEach(v=>o[v]=vars.includes(v)?best[v]:null);return {o,vars:vars.slice(),mode:md,s:bsc,relax:[...relax]};}
    }
-   const nx=TRELAX.find(v=>vars.includes(v)&&!relax.has(v)&&lim[v]!==undefined&&chosen[v].size>=lim[v]);
+   /* si con lo elegido no hay opción para ese día (p. ej. formal), se abre la categoría que lo bloquea */
+   const nx=vars.find(v=>pick[v].size&&!relax.has(v)&&!d0[v].length)||vars.find(v=>pick[v].size&&!relax.has(v));
    if(!nx)break;relax.add(nx);
   }
   return null;
@@ -2211,89 +2243,101 @@ function tripDayGen(day,others,lim,prevO,avoidKey){
 function tripPlan(){
  const n=trip.days,old=trip.plan||[];
  const flags=Array.from({length:n},(_,i)=>({formal:!!(old[i]&&old[i].formal),rain:!!(old[i]&&old[i].rain)}));
- const att=n<=4?10:n<=7?7:5;
- let best=null,bt=-1e9;
+ const att=n<=4?8:n<=7?6:4;let best=null,bt=-1e9;
  for(let a=0;a<att;a++){
-  const days=flags.map(f=>Object.assign({},f,{o:null}));
-  const lim=tripLimits(days);let sum=0,fail=false,rel=0;
+  const days=flags.map(f=>Object.assign({},f,{o:null}));let sum=0,fail=false,rel=0;
   const order=days.map((_,i)=>i).sort((x,y)=>(days[y].formal-days[x].formal)||(days[y].rain-days[x].rain));
   for(const i of order){
-   const others=days.filter((d,j)=>j!==i&&d.o);
-   const g=tripDayGen(days[i],others,lim,i>0&&days[i-1].o?days[i-1].o:null,null);
+   const g=tripDayGen(days[i],days.filter((d,j)=>j!==i&&d.o),i>0&&days[i-1].o?days[i-1].o:null,null);
    if(!g){fail=true;break;}
    Object.assign(days[i],g);sum+=g.s;rel+=g.relax.length;
   }
   if(fail)continue;
-  const t=sum/n-rel*3;
-  if(t>bt){bt=t;best=days;}
+  const t=sum/n-rel*4;if(t>bt){bt=t;best=days;}
  }
  return best;
 }
+function tripRegenDay(i){
+ const days=trip.plan,g=tripDayGen(days[i],days.filter((d,j)=>j!==i&&d.o),i>0&&days[i-1]&&days[i-1].o?days[i-1].o:null,days[i].o?ORDER.map(v=>days[i].o[v]||'0').join('~'):null);
+ if(g){Object.assign(days[i],g);tripSave();renderTrip();}else toast('No encuentro otra opción para ese día con lo que has elegido.');
+}
+/* lista de la maleta: lo elegido + lo que la app ha añadido donde no elegiste nada */
 function tripRows(){
  const g={};TGROUPS.forEach(([v])=>g[v]=new Map());
- trip.plan.forEach((d,i)=>{if(!d.o)return;d.vars.forEach(v=>{const id=d.o[v];if(!id||id==='none')return;if(!g[v].has(id))g[v].set(id,[]);g[v].get(id).push(i+1);});});
+ TGROUPS.forEach(([v])=>(trip.pick[v]||[]).forEach(id=>{if(id!=='none'&&info(v,id))g[v].set(id,{days:[],sug:false});}));
+ trip.plan.forEach((d,i)=>{if(!d.o)return;d.vars.forEach(v=>{const id=d.o[v];if(!id||id==='none')return;if(!g[v].has(id))g[v].set(id,{days:[],sug:true});g[v].get(id).days.push(i+1);});});
  return g;
 }
-function tripCombos(rows){
- return tripCtx(null,(vars)=>{
-  const empty={p:null,b:null,m:null,c:null,s:null,k:null,w:null};
-  const vs=vars.filter(v=>rows[v]&&rows[v].size);
-  const d0=baseDoms(vs,null,empty);let ok=true;
-  vs.forEach(v=>{d0[v]=d0[v].filter(id=>rows[v].has(id));if(!d0[v].length)ok=false;});
-  if(!ok)return 0;
-  let n=0;search(vs,d0,()=>{n++;return n>=3000;});return n;
- });
-}
-const tripKeyOf=o=>ORDER.map(v=>o[v]||'0').join('~');
 
+const chip0=(a,n,on)=>`<button type="button" class="chip" data-tp="${a}" aria-pressed="${on}">${n}</button>`;
 function renderTrip(){
  const el=document.getElementById('v-viaje');if(!el)return;
- const chip=(a,n,on)=>`<button type="button" class="chip" data-tp="${a}" aria-pressed="${on}">${n}</button>`;
  const WXN={calor:'Calor',templado:'Templado',frio:'Frío',lluvia:'Lluvia'};
- let h=`<div class="vh"><h2>Viaje</h2><p>Maleta, outfits por días y lista</p></div>
+ const nPick=TGROUPS.reduce((a,[v])=>a+(trip.pick[v]||[]).filter(id=>id!=='none').length,0);
+ let h=`<div class="vh"><h2>Viaje</h2><p>Elige tú la maleta</p></div>
  <div class="tcfg"><div class="ctxrow"><span>Días</span><span class="tstep"><button type="button" class="mini" data-tp="dm" aria-label="Un día menos">−</button><b>${trip.days}</b><button type="button" class="mini" data-tp="dp" aria-label="Un día más">+</button></span></div>
- <div class="ctxrow"><span>Tiempo</span>${Object.keys(WXN).map(k=>chip('wx:'+k,WXN[k],trip.wx.includes(k))).join('')}</div>
- <div class="ctxrow"><span>Zapatos</span>${[2,3,4].map(n=>chip('ms:'+n,'Máx. '+n,trip.maxS===n)).join('')}</div>
- <button type="button" class="mini pri tgo" data-tp="gen">${trip.plan.length?'Rehacer la maleta':'Preparar maleta'}</button>
- ${trip.plan.length&&trip.plan.length!==trip.days?'<p class="thint">Has cambiado los días: pulsa «Rehacer la maleta» para ajustar el plan.</p>':''}</div>`;
- if(!trip.plan.length||!trip.plan.every(d=>d&&d.o)){
-  el.innerHTML=h+`<div class="empty-v">Elige días y tiempo y pulsa «Preparar maleta». Te propongo las prendas mínimas, un outfit por día y la lista para ir marcando.</div>`;return;
- }
- const rows=tripRows(),nPieces=TGROUPS.reduce((a,[v])=>a+rows[v].size,0);
- const avg=Math.round(trip.plan.reduce((a,d)=>a+(d.s||0),0)/trip.plan.length);
- const combos=tripCombos(rows);
- const cnt=TGROUPS.filter(([v])=>rows[v].size).map(([v,n])=>`${rows[v].size} ${({p:'pantalones',b:'arriba',m:'capas',c:'abrigo',s:'zapatos',w:'cinturón',k:'calcetines'})[v]}`).join(' · ');
- h+=`<div class="kpis tk"><div class="kpi"><b>${nPieces}</b><span>prendas distintas</span></div><div class="kpi"><b>${avg}</b><span>nota media</span></div><div class="kpi"><b>${combos>=3000?'+3.000':combos}</b><span>conjuntos posibles</span></div></div><p class="thint">${cnt}</p>`;
- /* lista */
- let tot=0,done=0;
- const gh=TGROUPS.filter(([v])=>rows[v].size).map(([v,nm])=>`<div class="tgrp"><h4>${nm}</h4>${[...rows[v].entries()].map(([id,ds])=>{const key=v+':'+id,on=!!trip.checked[key];tot++;if(on)done++;
-  return `<label class="trow${on?' done':''}"><input type="checkbox" data-tpc="${esc2(key)}" ${on?'checked':''}><span class="tth">${thumb[v](id)}</span><span class="tnm">${esc2(info(v,id).n)}<small>${ds.length>1?'Días '+ds.join(', '):'Día '+ds[0]}</small></span></label>`;}).join('')}</div>`).join('');
- const xh=`<div class="tgrp"><h4>Imprescindibles</h4>${TEXTRA.map(([n,f])=>{const key='x:'+n,on=!!trip.checked[key];tot++;if(on)done++;const q=f(trip.days);return `<label class="trow tx${on?' done':''}"><input type="checkbox" data-tpc="${esc2(key)}" ${on?'checked':''}><span class="tnm">${n}${q>1?` <small>×${q}</small>`:''}</span></label>`;}).join('')}</div>`;
- h+=`<section class="tlist"><div class="trh2"><h3>Lista de la maleta</h3><span id="tprog" class="cnt">${done} de ${tot}</span><button type="button" class="mini" data-tp="clear">Desmarcar todo</button></div>${gh}${xh}</section>`;
- /* días */
- h+=`<div class="trh2"><h3>Día a día</h3></div><div class="cards">${trip.plan.map((d,i)=>{
-  const o=d.o,col=band(d.s)[0];
-  const names=d.vars.filter(v=>o[v]&&o[v]!=='none').map(v=>`<li>${esc2(info(v,o[v]).n)}</li>`).join('');
-  return `<div class="ocard"><div class="f">${figure(o,d.vars,false)}</div><div class="m"><span class="d">Día ${i+1}</span><b style="color:${col}">${d.s}</b><ul>${names}</ul>
-  <div class="row2"><button type="button" class="mini" data-tp="df:${i}" aria-pressed="${!!d.formal}">Formal</button><button type="button" class="mini" data-tp="dr:${i}" aria-pressed="${!!d.rain}">Lluvia</button><button type="button" class="mini" data-tp="dn:${i}">Otro</button><button type="button" class="mini pri" data-tp="dl:${i}">Probar</button></div></div></div>`;}).join('')}</div>`;
+ <div class="ctxrow"><span>Tiempo</span>${Object.keys(WXN).map(k=>chip0('wx:'+k,WXN[k],trip.wx.includes(k))).join('')}</div></div>
+ <div class="ttabs">${[['pick','Elegir'+(nPick?` (${nPick})`:'')],['plan','Outfits'],['list','Lista']].map(([k,n])=>chip0('tab:'+k,n,trip.tab===k)).join('')}</div>`;
+ if(trip.tab==='pick')h+=tripPickHTML();
+ else if(!trip.plan.length||!trip.plan.every(d=>d&&d.o))h+=`<div class="empty-v">Aún no hay outfits. Elige prendas en «Elegir» y pulsa «Preparar outfits».<br><br><button type="button" class="mini pri" data-tp="gen">Preparar outfits</button></div>`;
+ else h+=trip.tab==='plan'?tripPlanHTML():tripListHTML();
  el.innerHTML=h;
 }
-function tripRegenDay(i){
- const days=trip.plan,others=days.filter((d,j)=>j!==i&&d.o),lim=tripLimits(days);
- const g=tripDayGen(days[i],others,lim,i>0&&days[i-1]&&days[i-1].o?days[i-1].o:null,days[i].o?tripKeyOf(days[i].o):null);
- if(g){Object.assign(days[i],g);tripSave();renderTrip();}else toast('No encuentro otra opción para ese día con esta maleta.');
+function tripPickHTML(){
+ const C=tripCalc();
+ const lab={p:'pantalones',b:'arriba',m:'capas',c:'abrigo',s:'zapatos'};
+ const nP=Object.fromEntries(C.core.map(v=>[v,C.pick[v].size]));
+ const orph=[];C.vars.forEach(v=>{C.pick[v].forEach(id=>{if(id!=='none'&&!C.tiles[v][id])orph.push([v,id]);});});
+ const hints=C.core.map(v=>{const n=nP[v],r=C.rec[v],ok=n>=r;return `<li class="${ok?'ok':n?'mid':'no'}"><b>${n}</b> de ${r} ${lab[v]}${ok?'':n?` · ${r-n===1?'falta 1':'faltan '+(r-n)}`:' · sin elegir'}</li>`;}).join('');
+ const nTot=C.vars.reduce((a,v)=>a+C.pick[v].size,0);
+ let h=`<div class="tcfg"><div class="kpis tk"><div class="kpi"><b>${nTot}</b><span>prendas elegidas</span></div><div class="kpi"><b>${C.total>=3000?'+3.000':C.total}</b><span>conjuntos posibles</span></div></div>
+ <ul class="thints">${hints}</ul>
+ ${orph.length?`<p class="thint warn">Sin pareja con lo elegido: ${orph.map(([v,id])=>esc2(info(v,id).n)).join(', ')}</p>`:''}
+ <div class="row2"><button type="button" class="mini pri tgo" data-tp="gen">Preparar outfits</button>${nTot?'<button type="button" class="mini" data-tp="clearpick">Vaciar selección</button>':''}${chip0('only','Solo las que combinan',trip.only)}</div>
+ <p class="thint">El número de cada prenda son los conjuntos que salen con lo que ya has elegido. Si una categoría está vacía, la app propone prendas al preparar los outfits.</p></div>`;
+ C.vars.forEach(v=>{
+  const name=(TGROUPS.find(x=>x[0]===v)||[0,v])[1],sel=C.pick[v];
+  const groups=groupsOf(v).map(([gn,ids])=>{
+   const vis=ids.filter(id=>C.tiles[v][id]!==undefined&&(!trip.only||C.tiles[v][id]>0||sel.has(id)));if(!vis.length)return '';
+   return `<div class="sub">${gn}</div><div class="grid">${vis.map(id=>{const n=C.tiles[v][id],on=sel.has(id),o=info(v,id);
+    return `<button type="button" class="tit${on?' on':''}${n===0?' zero':''}" data-tp="pk:${v}:${id}" aria-pressed="${on}"><div class="th">${thumb[v](id)}</div><span class="tcn">${n>=99?'99+':n}</span>${on?'<span class="tck">✓</span>':''}<span>${esc2(o.n)}</span></button>`;}).join('')}</div>`;}).join('');
+  const rec=C.rec[v];
+  h+=`<section class="tray"><div class="trh"><h2>${name}</h2><span class="cnt">${sel.size?sel.size+' elegidas':'ninguna elegida'}${rec?` · sugeridas ${rec}`:''}</span></div>${groups||'<p class="empty-tray">Nada combina con lo elegido. Quita alguna prenda o activa ver todas.</p>'}</section>`;
+ });
+ return h;
+}
+function tripPlanHTML(){
+ const avg=Math.round(trip.plan.reduce((a,d)=>a+(d.s||0),0)/trip.plan.length);
+ let h=`<p class="thint">Nota media ${avg}. Cada día usa solo lo que has elegido. Marca un día como formal o con lluvia y se rehace solo. <button type="button" class="mini" data-tp="gen">Rehacer todo</button></p><div class="cards">`;
+ h+=trip.plan.map((d,i)=>{
+  const o=d.o,col=band(d.s)[0];
+  const names=d.vars.filter(v=>o[v]&&o[v]!=='none').map(v=>`<li${trip.pick[v]&&trip.pick[v].length&&!trip.pick[v].includes(o[v])?' class="sug"':''}>${esc2(info(v,o[v]).n)}</li>`).join('');
+  return `<div class="ocard"><div class="f">${figure(o,d.vars,false)}</div><div class="m"><span class="d">Día ${i+1}</span><b style="color:${col}">${d.s}</b><ul>${names}</ul>
+  <div class="row2"><button type="button" class="mini" data-tp="df:${i}" aria-pressed="${!!d.formal}">Formal</button><button type="button" class="mini" data-tp="dr:${i}" aria-pressed="${!!d.rain}">Lluvia</button><button type="button" class="mini" data-tp="dn:${i}">Otro</button><button type="button" class="mini pri" data-tp="dl:${i}">Probar</button></div></div></div>`;}).join('');
+ return h+'</div>';
+}
+function tripListHTML(){
+ const rows=tripRows();let tot=0,done=0;
+ const gh=TGROUPS.filter(([v])=>rows[v].size).map(([v,nm])=>`<div class="tgrp"><h4>${nm}</h4>${[...rows[v].entries()].map(([id,r])=>{const key=v+':'+id,on=!!trip.checked[key];tot++;if(on)done++;
+  const sub=(r.days.length?(r.days.length>1?'Días '+r.days.join(', '):'Día '+r.days[0]):'Sin usar en los outfits')+(r.sug?' · añadida por la app':'');
+  return `<label class="trow${on?' done':''}"><input type="checkbox" data-tpc="${esc2(key)}" ${on?'checked':''}><span class="tth">${thumb[v](id)}</span><span class="tnm">${esc2(info(v,id).n)}<small>${sub}</small></span></label>`;}).join('')}</div>`).join('');
+ const xh=`<div class="tgrp"><h4>Imprescindibles</h4>${TEXTRA.map(([n,f])=>{const key='x:'+n,on=!!trip.checked[key];tot++;if(on)done++;const q=f(trip.days);return `<label class="trow tx${on?' done':''}"><input type="checkbox" data-tpc="${esc2(key)}" ${on?'checked':''}><span class="tnm">${n}${q>1?` <small>×${q}</small>`:''}</span></label>`;}).join('')}</div>`;
+ return `<section class="tlist"><div class="trh2"><h3>Lista de la maleta</h3><span id="tprog" class="cnt">${done} de ${tot}</span><button type="button" class="mini" data-tp="clear">Desmarcar todo</button></div>${gh}${xh}</section>`;
 }
 document.addEventListener('click',e=>{
  const b=e.target.closest('[data-tp]');if(!b)return;
- const [a,x]=b.dataset.tp.split(':');
+ const [a,x,y]=b.dataset.tp.split(':');
  if(a==='dm'){trip.days=Math.max(1,trip.days-1);tripSave();renderTrip();return;}
  if(a==='dp'){trip.days=Math.min(21,trip.days+1);tripSave();renderTrip();return;}
  if(a==='wx'){const i=trip.wx.indexOf(x);if(i>=0)trip.wx.splice(i,1);else trip.wx.push(x);tripSave();renderTrip();return;}
- if(a==='ms'){trip.maxS=+x;tripSave();renderTrip();return;}
+ if(a==='tab'){trip.tab=x;tripSave();renderTrip();window.scrollTo({top:0});return;}
+ if(a==='only'){trip.only=!trip.only;tripSave();renderTrip();return;}
+ if(a==='pk'){const arr=tripPicked(x),i=arr.indexOf(y);if(i>=0)arr.splice(i,1);else arr.push(y);tripSave();const sy=window.scrollY;renderTrip();window.scrollTo({top:sy});return;}
+ if(a==='clearpick'){trip.pick={};tripSave();renderTrip();return;}
  if(a==='clear'){trip.checked={};tripSave();renderTrip();return;}
  if(a==='gen'){
   b.disabled=true;b.textContent='Preparando…';
-  setTimeout(()=>{const p=tripPlan();if(!p){toast('No he podido montar una maleta con esos datos. Prueba con otro tiempo.');}else{trip.plan=p;trip.checked={};tripSave();}renderTrip();},30);return;}
+  setTimeout(()=>{const p=tripPlan();if(!p){toast('No he podido montar outfits con esa selección. Añade más prendas.');renderTrip();}else{trip.plan=p;trip.checked={};trip.tab='plan';tripSave();renderTrip();window.scrollTo({top:0});}},30);return;}
  if(a==='df'||a==='dr'){const i=+x,d=trip.plan[i];if(!d)return;if(a==='df')d.formal=!d.formal;else d.rain=!d.rain;tripRegenDay(i);return;}
  if(a==='dn'){tripRegenDay(+x);return;}
  if(a==='dl'){const d=trip.plan[+x];if(!d)return;wxs.clear();occs.clear();mode=d.mode;sel={p:null,b:null,m:null,c:null,s:null,k:null,w:null};
@@ -2309,7 +2353,7 @@ document.addEventListener('change',e=>{
 });
 
 </script>
-<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 22 nov · 14:45</p>
+<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 22 nov · 15:00</p>
 <script>
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).catch(()=>{});});}
 </script>
