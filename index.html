@@ -441,7 +441,8 @@ function topSVG(t){
  if(t.t==='sweat') s+=`<path d="M82,14 Q100,31 118,14" fill="none" stroke="${sh}" stroke-width="6"/>`;
  if(t.t==='hoodie') s+=`<path d="M94,32 L93,56 M106,32 L107,56" stroke="${shade(c,.55)}" stroke-width="2" stroke-linecap="round"/><path d="M68,98 L132,98 L138,124 L62,124Z" fill="none" stroke="${sh}" stroke-width="2"/>`;
  if(t.t==='zip') s+=`<path d="M80,6 L120,6 L119,20 Q100,27 81,20Z" fill="${sh}" ${ST}/><line x1="100" y1="8" x2="100" y2="127" stroke="#A7843C" stroke-width="2.2"/>`;
- if(t.t==='polo'||t.t==='polosweat') s+=`<rect x="96" y="28" width="8" height="26" fill="${sh}"/><circle cx="100" cy="36" r="1.6" fill="${shade(c,.6)}"/><circle cx="100" cy="46" r="1.6" fill="${shade(c,.6)}"/><path d="M82,14 L100,32 L89,40 L73,20Z" fill="${c}" ${ST}/><path d="M118,14 L100,32 L111,40 L127,20Z" fill="${c}" ${ST}/>`;
+ if(t.t==='polosweat') s+=`<path d="M84,15 Q100,25 116,15 L104,30 L96,30Z" fill="${shade(c,-.35)}"/><rect x="96" y="30" width="8" height="24" fill="${sh}"/><circle cx="100" cy="46" r="1.6" fill="${shade(c,.6)}"/><path d="M82,14 L96,29 L88,39 L73,20Z" fill="${c}" ${ST}/><path d="M118,14 L104,29 L112,39 L127,20Z" fill="${c}" ${ST}/>`;
+ if(t.t==='polo') s+=`<rect x="96" y="28" width="8" height="26" fill="${sh}"/><circle cx="100" cy="36" r="1.6" fill="${shade(c,.6)}"/><circle cx="100" cy="46" r="1.6" fill="${shade(c,.6)}"/><path d="M82,14 L100,32 L89,40 L73,20Z" fill="${c}" ${ST}/><path d="M118,14 L100,32 L111,40 L127,20Z" fill="${c}" ${ST}/>`;
  if(t.p){ if(t.t==='hoodie') s+=`<rect x="80" y="62" width="40" height="9" rx="2" fill="${t.p}" opacity=".9"/>`;
           else s+=`<rect x="112" y="44" width="20" height="12" rx="3" fill="${t.p}" opacity=".9"/>`; }
  return s;}
@@ -1215,12 +1216,16 @@ function midSVG(id){if(T[id])return topSVG(T[id]);return midDraw(isCU(id)?CU[id]
 function baseVis(b,m){
  const tm=topType('m',m),tb=topType('b',b);
  if(tb==='shirt'||['zip','cardigan','hzip'].includes(tm))return 'full';
- if(tb==='polo'){if(tm==='pshirt')return null;if(tm==='hoodie')return 'hem';return 'collar';}
+ if(tb==='polo'){if(tm==='pshirt')return null;return 'collar';}
  return 'hem';
 }
 function cdist(a,b){const x=parseInt(a.slice(1),16),y=parseInt(b.slice(1),16);const d=[(x>>16)-(y>>16),((x>>8)&255)-((y>>8)&255),(x&255)-(y&255)];return Math.sqrt(d[0]*d[0]+d[1]*d[1]+d[2]*d[2]);}
 function peek(b,m){
  const tm=topType('m',m),tb=topType('b',b);
+ if(tm==='polosweat'){const col=info('b',b).c,dk=shade(col,-.2);
+  const v=`<path d="M84,15 Q100,25 116,15 L104,30 L96,30Z" fill="${col}"/>`;
+  if(tb==='tee')return v+`<path d="M84,15 Q100,25 116,15" fill="none" stroke="${dk}" stroke-width="2"/>`;
+  return v+`<path d="M85,11 L99,26 L95,30 L82,15Z M115,11 L101,26 L105,30 L118,15Z" fill="${col}" ${ST}/><rect x="97" y="26" width="6" height="8" fill="${dk}"/><circle cx="100" cy="29" r="1" fill="${shade(col,.6)}"/>`;}
  if(tb==='polo'&&(tm==='hoodie'||tm==='polosweat'))return `<path d="M84,14 L100,29 L92,35 L77,19Z M116,14 L100,29 L108,35 L123,19Z" fill="${info('b',b).c}" ${ST}/>`;
  if(tm==='zip'||tm==='polosweat'||tm==='pshirt'||tm==='cardigan')return '';
  if(tm==='hoodie')return tb==='tee'?`<path d="M88,24 Q100,34 112,24 L112,27 Q100,37 88,27Z" fill="${info('b',b).c}" ${ST}/>`:'';
@@ -1350,12 +1355,12 @@ function figure(o,vars,ghost){
  let s=clipB?`<defs><clipPath id="${fid}b"><rect x="49" y="-16" width="102" height="160"/></clipPath></defs>`:'';
  s+=o.k?sock2(o.k):g('k');
  s+=o.p?pantDraw(o.p):g('p');
- TUCKV=(o.b&&topType('b',o.b)==='shirt')?(has('m')&&o.m?(tuck?'hid':'outm'):(o.p?(tuck?'in':'out'):null)):null;
+ TUCKV=(o.b&&topType('b',o.b)==='shirt')?(has('m')&&o.m?'hid':(o.p?(tuck?'in':'out'):null)):null;
  s+=o.b?(clipB?`<g clip-path="url(#${fid}b)">${baseSVG(o.b)}</g>`:baseSVG(o.b)):g('b');
  TUCKV=null;
  const clipM=has('c')&&o.c&&o.m&&!['vest','vestp'].includes(info('c',o.c).k);
  if(clipM)s+=`<defs><clipPath id="${fid}m"><rect x="60" y="-16" width="80" height="200"/></clipPath></defs>`;
- if(has('m')){s+=o.m?(clipM?`<g clip-path="url(#${fid}m)">${midSVG(o.m)}</g>`:midSVG(o.m)):g('m');if(o.m&&o.b){s+=peek(o.b,o.m);if(info('b',o.b)&&(topType('b',o.b)==='tee'||(topType('b',o.b)==='polo'&&topType('m',o.m)!=='pshirt')))s+=`<path d="M51,133 L149,133 L149,140 L51,140Z" fill="${info('b',o.b).c}" ${ST}/>`;}}
+ if(has('m')){s+=o.m?(clipM?`<g clip-path="url(#${fid}m)">${midSVG(o.m)}</g>`:midSVG(o.m)):g('m');if(o.m&&o.b){s+=peek(o.b,o.m);if(info('b',o.b)&&topType('b',o.b)==='tee')s+=`<path d="M51,133 L149,133 L149,140 L51,140Z" fill="${info('b',o.b).c}" ${ST}/>`;}}
  if(has('c'))s+=o.c?coatSVG(o.c):g('c');
  if(has('w')&&o.w&&o.w!=='none'&&o.p&&!has('c')){const tm=has('m')&&o.m?topType('m',o.m):null;const tb=o.b?topType('b',o.b):null;if(!tm&&tb==='shirt'&&tuck)s+=beltDraw(o.w,55,134,90);}
  s+=o.s?shoe2(o.s):g('s');
@@ -1481,6 +1486,7 @@ function scoreOf(o,vars,opts){
    else if(ACC.has(fb)&&ACC.has(fm)&&!pb2&&fb!==fm)addv(-5,(zipOpen?'Lo de debajo y la capa':'Cuello y capa')+': dos colores fuertes que no casan');
    else if(!ACC.has(fb)&&!ACC.has(fm)&&!pb2&&d<=150&&d>=45)addv(-1,(zipOpen?'Lo de debajo y la capa':'Cuello y capa')+' en neutros sin mucha gracia');
    if(['hzip','zip'].includes(topType('m',o.m))&&['polo','shirt'].includes(tb)&&d>=45&&!(ACC.has(fb)&&ACC.has(fm)&&!pb2&&fb!==fm))add(5,'La cremallera abierta deja ver '+(tb==='polo'?'el polo':'la camisa'));
+   if(topType('m',o.m)==='polosweat'&&['polo','tee'].includes(tb)&&d>=45&&!(ACC.has(fb)&&ACC.has(fm)&&!pb2&&fb!==fm))add(4,'El botón abierto deja ver '+(tb==='polo'?'el polo':'la camiseta')+' de debajo');
    if(tb==='polo'&&!zipOpen){const ok=d>=45&&(pb2>0||d>150||(ACC.has(fb)&&!ACC.has(fm)));const bad=d<45||(ACC.has(fb)&&ACC.has(fm)&&!pb2&&fb!==fm);
     if(ok)addv(4,'El cuello del polo por fuera le da más estilo a la sudadera');else if(bad)addv(-3,'El cuello del polo por fuera no le aporta: mejor camiseta debajo');}
    if(tb==='polo'&&has('p')){const dp=cdist(info('b',o.b).c,info('p',o.p).c),fp=famOf('p',o.p);if(dp<40&&fp!==fb)addv(-3,'El polo que asoma por abajo casi se funde con el pantalón');}
@@ -2412,7 +2418,7 @@ document.addEventListener('change',e=>{
 });
 
 </script>
-<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 22 nov · 16:30</p>
+<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 22 nov · 16:50</p>
 <script>
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).catch(()=>{});});}
 </script>
