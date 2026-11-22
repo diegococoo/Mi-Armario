@@ -825,7 +825,7 @@ const OCS={
  any:{n:'Cualquiera'},
  clase:{n:'Clase o trabajo',pref:[2,2],ban:v=>v.xmas},
  finde:{n:'Fin de semana',pref:[1,2]},
- cena:{n:'Cena o salir',pref:[2,3],ban:v=>(v.v==='m'&&v.t==='hoodie')||(v.v==='s'&&v.fz===1)||v.sk==='sandal'||v.pk==='short'||v.xmas},
+ cena:{n:'Cena o salir',pref:[2,3],ban:v=>(v.v==='m'&&v.t==='hoodie')||v.sk==='sandal'||v.pk==='short'||v.xmas},
  evento:{n:'Evento',pref:[3,3],ban:v=>(v.fz<=1&&v.v!=='k')||v.xmas||v.loud}
 };
 const PANTFZ={dustin:1,denim:1,negro:1,wrangler:1,levis:1,levisB:1,leeClaro:1,dustinClaro:1,grisaceo:1,leeGris:1,cMarino:2,cCamel:2,cBeige:2,cCrudo:2,cAcero:2,cGris:2};
@@ -911,9 +911,7 @@ function shoeTop(v,t,s){
  if(Math.abs(fzTop(v,t)-shoeFz(s))>1)return false;
  const f=famOf(v,t);
  if(isT(t)&&!isCU(s)&&!cTS(t,s))return false;
- if(s==='sl72'&&['burdeos','rojo','coral','rosa','lila','indigo'].includes(f))return false;
  if(s==='mocasin'&&f==='burdeos')return false;
- if(s==='blazer'&&['verde','coral'].includes(f))return false;
  if(isCU(s)){const sf=CU[s].fam;if(ACC.has(sf)&&ACC.has(f)&&sf!==f&&clash(sf,f))return false;}
  return true;
 }
@@ -939,7 +937,6 @@ function sockShoe(s,k){
  if(k==='none')return NOSOCKOK(s);
  if(K2.loud&&shoeFz(s)>=3)return false;
  const kf=famOf('k',k);
- if(s==='sl72'&&(['burdeos','rojo','azul','petroleo'].includes(kf)||k==='invis'))return false;
  if(shoeFz(s)===1&&(K2.loud||k==='invis'))return false;
  if(K2.warm&&kindOf(s)==='run')return false;
  if(k==='invis'&&!NOSOCKOK(s)&&!['anteMarron','anteMarino'].includes(s))return false;
@@ -1445,6 +1442,15 @@ function scoreOf(o,vars,opts){
   if(X){const fs=[...new Set(cloth.map(x=>x.f))];const g=fs.filter(f=>X.good.includes(f)),b=fs.filter(f=>X.bad.includes(f));
    if(g.length)add(Math.min(6,2*g.length),`Los tonos ${X.lab} de las zapatillas van con ${g.map(f=>famName(f).toLowerCase()).join(', ')}`);
    if(b.length)add(-3*b.length,`Las zapatillas (${X.lab}) no casan con ${b.map(f=>famName(f).toLowerCase()).join(', ')}`);}
+ }
+ if(has('s')){
+  const up=cloth.filter(x=>x.v!=='p').map(x=>x.f);
+  if(o.s==='sl72'){
+   if(up.some(f=>['rojo','coral','rosa','lila','indigo'].includes(f)))add(-6,'Las SL 72 burdeos no casan con un arriba rojo, coral, rosa, lila o índigo');
+   if(has('k')){const kf0=famOf('k',o.k);if(['burdeos','rojo','azul','petroleo'].includes(kf0))add(-9,'Las SL 72 con calcetín de ese color se pisan');else if(o.k==='invis')add(-3,'Las SL 72 piden calcetín visible');}
+  }
+  if(o.s==='blazer'&&up.some(f=>['verde','coral'].includes(f)))add(-5,'Los botines no casan con un arriba verde o coral');
+  if(occList().includes('cena')&&shoeFz(o.s)===1)add(-8,'Zapatilla de running: poco adecuada para una cena');
  }
  if(has('k')){
   const kf=famOf('k',o.k),K2=info('k',o.k);
@@ -2071,7 +2077,7 @@ initStore();
 initAI();
 
 </script>
-<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 22 nov · 13:50</p>
+<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 22 nov · 14:05</p>
 <script>
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).catch(()=>{});});}
 </script>
