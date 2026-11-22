@@ -452,22 +452,22 @@ const G=[
   shoes:['spNeg','sl72','superga','nb327','gazelle','anteMarino','anteMarron','nb2002'],ban:['gris']},
  {id:'chinomarino',name:'Chino marino',pants:['cMarino'],note:'Base clásica: blancos, cremas, grises, pasteles y colores. Admite cualquier camiseta, polo o sudadera: el color lo decide la puntuación.',
   tops:ALL.slice(),
-  shoes:['nauticos','anteMarron','spGris','nb327','sl72','superga','vomero','nikeGris','spNeg'],ban:[]},
+  shoes:['nauticos','anteMarron','spGris','sl72','superga','spNeg'],ban:[]},
  {id:'chinocamel',name:'Chino camel',pants:['cCamel'],note:'Tu comodín de otoño: marino, blanco, negro, verde, burdeos y azules. Admite cualquier camiseta, polo o sudadera: el color lo decide la puntuación.',
   tops:ALL.slice(),
-  shoes:['anteMarino','gazelle','spNeg','superga','nauticos','sl72','spGris','nb2002'],ban:[]},
+  shoes:['anteMarino','gazelle','spNeg','superga','nauticos','sl72','spGris'],ban:[]},
  {id:'chinobeige',name:'Chino beige',pants:['cBeige'],note:'Tono claro y suave: marino, verdes, burdeos, azules y pasteles. Admite cualquier camiseta, polo o sudadera: el color lo decide la puntuación.',
   tops:ALL.slice(),
-  shoes:['nauticos','anteMarino','anteMarron','spGris','gazelle','nb327','spNeg','superga'],ban:[]},
+  shoes:['nauticos','anteMarino','anteMarron','spGris','gazelle','spNeg','superga'],ban:[]},
  {id:'chinocrudo',name:'Chino crudo',pants:['cCrudo'],note:'El más claro: necesita contraste arriba. Admite cualquier camiseta, polo o sudadera: el color lo decide la puntuación.',
   tops:ALL.slice(),
   shoes:['nauticos','anteMarino','gazelle','anteMarron','spNeg','superga'],ban:[]},
  {id:'chinoacero',name:'Chino azul acero',pants:['cAcero'],note:'Azul suave: blancos, rosas, cremas, grises, burdeos y verdes. Admite cualquier camiseta, polo o sudadera: el color lo decide la puntuación.',
   tops:ALL.slice(),
-  shoes:['anteMarron','nauticos','nb327','spGris','sl72','superga','nikeGris'],ban:[]},
+  shoes:['anteMarron','nauticos','spGris','sl72','superga'],ban:[]},
  {id:'chinogris',name:'Chino gris',pants:['cGris'],note:'Neutro frío: burdeos, verdes, coral, rosa, marino, blanco y azules. Admite cualquier camiseta, polo o sudadera: el color lo decide la puntuación.',
   tops:ALL.slice(),
-  shoes:['spNeg','anteMarino','sl72','gazelle','superga','nb2002','anteMarron','nauticos'],ban:[]}
+  shoes:['spNeg','anteMarino','sl72','gazelle','superga','anteMarron','nauticos'],ban:[]}
 ];
 const FORMAL=new Set(['polosudLac','polosudYux','polosudBic','crCrem','sudCrema','sudPerla','sudBlanca']);
 const PREF={formal:['anteMarron','nauticos','anteMarino','spGris','gazelle','spNeg','sl72','nb327','superga'],
@@ -941,6 +941,7 @@ function sockShoe(s,k){
 }
 function pantShoe(p,s){
  if(isCU(p)&&['short','lino'].includes(CU[p].pk)){const kind=isCU(s)?CU[s].sk:S[s].k;if(['boot','hi'].includes(kind)||['oxford','oxfordNeg'].includes(s))return false;if(CU[p].pk==='short'){const pf=famOf('p',p),sf=famOf('s',s);return !(pf===sf&&ACC.has(pf));}}
+ if(isCU(p)&&CU[p].type==='chino'&&kindOf(s)==='run')return false;
  if(DRESSP.has(p)&&(shoeFz(s)===1||['hi','boot','esp','esploafer','clog','sandal'].includes(kindOf(s))))return false;
  if(!isCU(p)&&!isCU(s))return NEWSHOEPANT[s]?NEWSHOEPANT[s].includes(p):GP[p].shoes.includes(s);
  if(Math.abs(pantFz(p)-shoeFz(s))>1)return false;
@@ -968,20 +969,17 @@ function shoeTone(s){const f=famOf('s',s);const k=kindOf(s);if(f==='negro')retur
 function beltTone(w){const f=famOf('w',w);if(f==='negro')return 'negro';if(['marron','camel','burdeos'].includes(f))return 'marron';return 'otro';}
 function beltShoe(w,s){
  if(w==='none')return true;
- const bt=beltTone(w),st=shoeTone(s),sfz=shoeFz(s),wfz=fzOf('w',w);
- if(sfz>=3&&wfz<=1)return false;
- if(bt==='negro'&&st==='marron'&&sfz>=2&&!['run','terr','canvas','hi'].includes(kindOf(s)))return false;
- if(bt==='marron'&&st==='negro'&&sfz>=3)return false;
+ const bt=beltTone(w),st=shoeTone(s),sf=famOf('s',s);
+ if(bt==='negro'&&(st==='marron'||sf==='marino'))return false;
+ if(bt==='marron'&&st==='negro')return false;
  if(bt==='negro'&&SUMMERSHOE(s))return false;
  return true;
 }
 function beltPant(p,w){
  if(w==='none')return true;
- const wfz=fzOf('w',w),pfz=pantFz(p);
- if(DRESSP.has(p)&&wfz<=1)return false;
- if(Math.abs(wfz-pfz)>1)return false;
- const pf=famOf('p',p),wf=famOf('w',w);if(pf&&wf&&pf===wf&&ACC.has(pf))return false;
- if(pf==='negro'&&wf==='negro')return true;
+ const pf=famOf('p',p),wf=famOf('w',w);
+ if(pf&&wf&&pf===wf&&(ACC.has(pf)||pf==='marino'))return false;
+ if(wf==='negro'&&['camel','beige','crema'].includes(pf))return false;
  return true;
 }
 function pair(va,a,vb,b){
@@ -1341,9 +1339,9 @@ GOODSHOE.nb2002=['dustin','denim','cMarino','cBeige','cCrudo','levis','leeClaro'
 GOODSHOE.vomero=['dustin','denim','negro','leeGris','cGris','cMarino','v_cargoGris'];
 GOODSHOE.nikeGris=['levis','leeClaro','dustinClaro','cBeige','cCrudo','cMarino','dustin','denim'];
 const JEANS_ALL=['dustin','denim','wrangler','levis','leeClaro','dustinClaro','levisB','grisaceo','leeGris'];
-NEWSHOEPANT.nb2002=[...JEANS_ALL,'cMarino','cBeige','cCrudo','cCamel','cGris'];
-NEWSHOEPANT.vomero=[...JEANS_ALL,'negro','cMarino','cGris','cAcero'];
-NEWSHOEPANT.nikeGris=[...JEANS_ALL,'cMarino','cAcero','cBeige','cCrudo','cCamel','cGris'];
+NEWSHOEPANT.nb2002=[...JEANS_ALL];
+NEWSHOEPANT.vomero=[...JEANS_ALL,'negro'];
+NEWSHOEPANT.nikeGris=[...JEANS_ALL];
 const SHOEX={
  nb2002:{lab:'topo cálidos con detalles marino',good:['marino','crema','beige','denim','denimclaro','burdeos','oliva','verde','camel','blanco'],bad:['negro','lila','rosa','menta']},
  vomero:{lab:'gris frío y blanco',good:['negro','antracita','gris','marino','blanco','denim','azulclaro','azul','indigo','petroleo'],bad:['camel','marron','beige','mostaza','crema']},
@@ -1439,11 +1437,19 @@ function scoreOf(o,vars,opts){
   if(K2.exec){if(has('s')&&shoeFz(o.s)>=3)add(6,'Media ejecutiva con zapato de vestir');else add(2,'Media ejecutiva, sobria y elegante');}
   else if(o.k==='none'){if(has('s')&&SUMMERSHOE(o.s))add(3,'Sin calcetín, como pide el calzado de verano');}
   else if(o.k==='invis')add(-3,'Se pierde el toque del calcetín');
-  else if(kf&&(cloth.some(x=>x.f===kf||(kf==='verde'&&x.f==='oliva'))||shoeF===kf))add(7,'El calcetín repite un color del conjunto');
-  else if(kacc.some(a=>cloth.some(x=>x.f===a||(a==='verde'&&x.f==='oliva'))||shoeF===a))add(5,'El dibujo del calcetín recoge un color del conjunto');
-  else if(K2.dress&&has('s')&&shoeFz(o.s)>=3)add(4,'Calcetín fino, va con zapato de vestir');
-  else if(['marino','gris','negro','antracita'].includes(kf))add(1,'Calcetín discreto');
-  else if(!kBack)add(-2,'El calcetín no repite ningún color');
+  else{
+   const eq=(f,g)=>f&&g&&(f===g||(f==='verde'&&g==='oliva')||(f==='oliva'&&g==='verde'));
+   const upF=cloth.filter(x=>x.v!=='p').map(x=>x.f);
+   const kset=[kf,...kacc].filter(Boolean);
+   const mUp=kset.some(g=>upF.some(f=>eq(f,g))),mSh=!!shoeF&&kset.some(g=>eq(g,shoeF)),mAny=kset.some(g=>cloth.some(x=>eq(x.f,g)));
+   if(mUp&&mSh)add(10,'El calcetín repite un color de la prenda de arriba y del calzado');
+   else if(mUp)add(8,'El calcetín repite un color de la prenda de arriba');
+   else if(mSh)add(8,'El calcetín repite el color del calzado');
+   else if(mAny)add(2,'El calcetín solo repite el color del pantalón');
+   else if(K2.dress&&has('s')&&shoeFz(o.s)>=3)add(4,'Calcetín fino, va con zapato de vestir');
+   else if(['marino','gris','negro','antracita'].includes(kf))add(-1,'Calcetín discreto, pero no enlaza con la prenda de arriba ni con el calzado');
+   else if(!kBack)add(-6,'El calcetín no combina ni con la prenda de arriba ni con el calzado');
+  }
   if(K2.loud){if(accs.length===0)add(3,'Calcetín alegre sobre base sobria');else add(-4,'Calcetín llamativo con mucho color arriba');}
  }
 {const bv=(has('m')&&!has('c')&&info('m',o.m).back)||(has('b')&&!has('m')&&!has('c')&&info('b',o.b)&&info('b',o.b).back);
@@ -1458,7 +1464,7 @@ function scoreOf(o,vars,opts){
   if(cf==='beige'&&inner.some(x=>['marino','burdeos','verde','oliva'].includes(x.f)))add(4,'La cazadora beige resalta lo de debajo');
   const dark=[info('c',o.c).c,...inner.map(x=>x.c),has('p')?info('p',o.p).c:null].filter(Boolean).every(c=>lum(c)<.06);
   if(dark)add(-5,'Todo muy oscuro, sin un punto de luz');}
- if(has('w')&&o.w!=='none'&&has('s')){const bt=beltTone(o.w),st=shoeTone(o.s);if(bt!=='otro'&&bt===st)add(4,'Cinturón a juego con el zapato');else if(o.w==='beTrenz'&&!SUMMERSHOE(o.s)&&shoeFz(o.s)<=2)add(2,'Cinturón trenzado, toque informal');}
+ if(has('w')&&o.w!=='none'&&has('s')){const bt=beltTone(o.w),st=shoeTone(o.s);if(bt!=='otro'&&bt===st)add(5,'Cinturón a juego con el zapato');else if(o.w==='beTrenz'&&!SUMMERSHOE(o.s)&&shoeFz(o.s)<=2)add(2,'Cinturón trenzado, toque informal');}
  if(has('b')&&!has('m')&&!has('c')&&has('s')&&topType('b',o.b)==='polo'&&kindOf(o.s)==='run'&&o.s!=='nb327')add(-3,'Polo a la vista con zapatilla de running: mejor con algo encima o con otra zapatilla');
  if(has('w')&&o.w==='none'&&has('p')&&(DRESSP.has(o.p)||pantFz(o.p)>=2)&&has('b')&&['shirt','polo'].includes(topType('b',o.b))&&!has('m'))add(-3,'Con camisa o polo por dentro pide cinturón');
  let nm=0;if(has('p')&&famOf('p',o.p)==='marino')nm++;['b','m','c'].forEach(v=>{if(has(v)&&famOf(v,o[v])==='marino')nm++;});
@@ -2045,7 +2051,7 @@ initStore();
 initAI();
 
 </script>
-<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 22 nov · 12:45</p>
+<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 22 nov · 13:10</p>
 <script>
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).catch(()=>{});});}
 </script>
