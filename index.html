@@ -41,6 +41,10 @@
 .tit.zero .tcn{background:var(--accent)}
 .tck{position:absolute;top:4px;right:4px;font:800 12px var(--body);background:var(--accent);color:var(--paper);border-radius:999px;width:18px;height:18px;line-height:18px}
 .ocard .m li.sug{font-style:italic}
+.tverd{display:grid;grid-template-columns:56px 1fr;gap:12px;align-items:start;margin:10px 0 4px;padding:12px;border:1px solid var(--line);border-radius:8px;background:var(--stage)}
+.tverd>b{font:800 24px var(--display);color:#fff;border-radius:10px;height:56px;display:flex;align-items:center;justify-content:center}
+.tverd h3{margin:0 0 4px;font-size:16px;font-weight:800}
+.tverd ul{margin:0;padding-left:16px;font-size:13px;line-height:1.4;color:var(--ink)}.tverd li{margin:2px 0}
 </style>
 </head>
 <body>
@@ -2214,8 +2218,15 @@ function tripCalc(){
    tiles[v][id]=cnt(v,id,withScore?30:99);});});
   const dT=baseDoms(core,null,empty);core.forEach(v=>{if(pick[v].size)dT[v]=dT[v].filter(x=>pick[v].has(x));});
   let total=0;if(!core.some(v=>!dT[v].length))search(core,dT,()=>{total++;return total>=3000;});
-  const cold=trip.wx.includes('frio');
-  return {vars,md,core,pick,tiles,scores,total,rec:tripRec(trip.days,cold)};
+  const cold=trip.wx.includes('frio'),rec=tripRec(trip.days,cold);
+  /* calidad: nota media de los mejores conjuntos que salen con lo elegido (tantos como días) */
+  const dS=baseDoms(vars,null,empty);vars.forEach(v=>{if(pick[v].size)dS[v]=dS[v].filter(x=>pick[v].has(x));});
+  const q=[];if(!vars.some(v=>!dS[v].length)){for(let i=0;i<8;i++){let c=0;search(vars,dS,as=>{const r=scoreOf(as,vars);if(r)q.push(r.s);return ++c>=8;},true);}}
+  q.sort((a,b)=>b-a);const top=q.slice(0,Math.max(1,Math.min(trip.days,q.length)));
+  const qual=top.length?Math.round(top.reduce((a,x)=>a+x,0)/top.length):null;
+  /* la prenda que más subiría la maleta, entre las categorías que aún están cortas */
+  let add=null;core.forEach(v=>{if(pick[v].size>=rec[v])return;Object.entries(scores[v]).forEach(([id,sc])=>{if(!pick[v].has(id)&&tiles[v][id]>0&&(!add||sc>add.s))add={v,id,s:sc};});});
+  return {vars,md,core,pick,tiles,scores,total,rec,qual,add};
  });
 }
 
@@ -2292,6 +2303,29 @@ function renderTrip(){
  else h+=trip.tab==='plan'?tripPlanHTML():tripListHTML();
  el.innerHTML=h;
 }
+function tripVerdict(C,orph){
+ const n=trip.days,lab={p:'pantalones',b:'partes de arriba',m:'capas',s:'pares de zapatos'},sing={p:'pantalón',b:'parte de arriba',m:'capa',s:'par de zapatos'};
+ const nP=Object.fromEntries(C.core.map(v=>[v,C.pick[v].size])),nTot=C.vars.reduce((a,v)=>a+C.pick[v].size,0);
+ if(nTot<2||C.qual===null)return null;
+ const cov=Math.round(C.core.reduce((a,v)=>a+Math.min(1,nP[v]/C.rec[v]),0)/C.core.length*100);
+ const vari=Math.min(100,Math.round(C.total/(n*4)*100));
+ let sc=Math.round(C.qual*.55+cov*.30+vari*.15)-Math.min(15,orph.length*5);
+ sc=Math.max(5,Math.min(100,sc));
+ const lines=[];
+ lines.push(`Los ${Math.min(n,Math.max(1,nTot))>1?'mejores conjuntos':'mejor conjunto'} que salen tienen nota media ${C.qual}.`);
+ const gaps=C.core.filter(v=>nP[v]<C.rec[v]);
+ if(!gaps.length)lines.push('Cubres bien los días: tienes prendas de sobra de cada tipo.');
+ else gaps.forEach(v=>{const f=C.rec[v]-nP[v];
+  if(v==='b')lines.push(nP[v]?`Con ${nP[v]} de ${n} partes de arriba repetirás ${f}: añade ${f} más si puedes.`:'Aún no has elegido partes de arriba.');
+  else if(v==='p')lines.push(nP[v]?`Con ${nP[v]} ${nP[v]===1?'pantalón':'pantalones'} repetirás mucho: sugiero ${C.rec[v]}.`:'Aún no has elegido pantalones.');
+  else lines.push(nP[v]?`Pocos ${lab[v]}: sugiero ${C.rec[v]}.`:`Aún no has elegido ${lab[v]}.`);});
+ if(C.total<n*2)lines.push(`Solo salen ${C.total} conjuntos distintos: poca variedad.`);
+ else if(C.total>=3000)lines.push('Variedad de sobra: salen más de 3.000 conjuntos.');
+ if(orph.length)lines.push(`Sin pareja: ${orph.map(([v,id])=>esc2(info(v,id).n)).join(', ')}. Quítala o añade algo que le vaya.`);
+ if(C.add)lines.push(`Lo que más subiría la maleta: ${esc2(info(C.add.v,C.add.id).n)} (nota ${C.add.s}).`);
+ const head=sc>=90?'Maleta redonda':sc>=80?'Muy buena maleta':sc>=65?'Maleta correcta':sc>=50?'Maleta mejorable':'Maleta floja';
+ return {sc,head,lines};
+}
 function tripPickHTML(){
  const C=tripCalc();
  const lab={p:'pantalones',b:'arriba',m:'capas',s:'zapatos'};
@@ -2301,6 +2335,7 @@ function tripPickHTML(){
  const nTot=C.vars.reduce((a,v)=>a+C.pick[v].size,0);
  let h=`<div class="tcfg"><div class="kpis tk"><div class="kpi"><b>${nTot}</b><span>prendas elegidas</span></div><div class="kpi"><b>${C.total>=3000?'+3.000':C.total}</b><span>conjuntos posibles</span></div></div>
  <ul class="thints">${hints}</ul>
+ ${(()=>{const V=tripVerdict(C,orph);return V?`<div class="tverd"><b style="background:${band(V.sc)[0]}">${V.sc}</b><div><h3>${V.head}</h3><ul>${V.lines.map(l=>`<li>${l}</li>`).join('')}</ul></div></div>`:'<p class="thint">Elige unas cuantas prendas y te doy mi opinión de la maleta con nota.</p>';})()}
  ${orph.length?`<p class="thint warn">Sin pareja con lo elegido: ${orph.map(([v,id])=>esc2(info(v,id).n)).join(', ')}</p>`:''}
  <div class="row2"><button type="button" class="mini pri tgo" data-tp="gen">Preparar outfits</button>${nTot?'<button type="button" class="mini" data-tp="clearpick">Vaciar selección</button>':''}</div>
  <p class="thint">Según eliges, se van descartando las prendas que ya no combinan con tu selección (puedes verlas en cada categoría). Cuando ya has elegido algo, cada prenda muestra la nota media de los conjuntos que saldrían con ella (las mejores, primero). Si una categoría está vacía, la app propone prendas al preparar los outfits.</p></div>`;
@@ -2365,7 +2400,7 @@ document.addEventListener('change',e=>{
 });
 
 </script>
-<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 22 nov · 15:40</p>
+<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 22 nov · 15:55</p>
 <script>
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).catch(()=>{});});}
 </script>
