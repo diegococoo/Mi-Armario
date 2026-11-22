@@ -890,8 +890,14 @@ const NEWSHOEPANT={
 const CLASH=[['burdeos','coral'],['coral','camel'],['coral','indigo'],['azul','indigo'],['burdeos','rojo'],['rosa','coral'],['mostaza','coral'],['mostaza','rosa']];
 const clash=(a,b)=>CLASH.some(([x,y])=>(x===a&&y===b)||(x===b&&y===a));
 const NEUTRAL=new Set(['blanco','crema','beige','negro','antracita','gris','marino','denim','denimclaro','azulclaro','camel','marron']);
+const CHINOS_B=['cMarino','cCamel','cBeige','cCrudo','cAcero','cGris'];
 function pantTop(p,v,id){
  if(DRESSP.has(p)&&topType(v,id)==='hoodie')return false;
+ const tt=topType(v,id);
+ if(['knit','knitV','cardigan'].includes(tt)){
+  const ok=DRESSP.has(p)||(isCU(p)?['chino','vestir'].includes(CU[p].type):CHINOS_B.includes(p));
+  if(!ok)return false;
+ }
  const f=famOf(v,id);
  if(isCU(p)){const pf=CU[p].fam;
   if(f===pf&&!['blanco','gris','denimclaro'].includes(f))return false;
@@ -946,15 +952,17 @@ function pantShoe(p,s){
  if(['oxford','oxfordNeg','mocasin'].includes(s)){
   const ok=DRESSP.has(p)||(isCU(p)?['cargo','chino','vestir'].includes(CU[p].type):['cMarino','cCamel','cBeige','cCrudo','cAcero','cGris'].includes(p));
   if(!ok)return false;
+  if(isCU(p)){const pf=famOf('p',p),sf=famOf('s',s);return !(pf===sf&&ACC.has(pf));}
+ }
+ if(kindOf(s)==='run'){
+  const okp=isCU(p)?['vaquero','cargo','bermuda'].includes(CU[p].type):!CHINOS_B.includes(p)&&!DRESSP.has(p);
+  if(!okp)return false;
  }
  if(isCU(p)&&['short','lino'].includes(CU[p].pk)){const kind=isCU(s)?CU[s].sk:S[s].k;if(['boot','hi'].includes(kind)||['oxford','oxfordNeg'].includes(s))return false;if(CU[p].pk==='short'){const pf=famOf('p',p),sf=famOf('s',s);return !(pf===sf&&ACC.has(pf));}}
  if(isCU(p)&&CU[p].type==='chino'&&kindOf(s)==='run')return false;
  if(DRESSP.has(p)&&(shoeFz(s)===1||['hi','boot','esp','esploafer','clog','sandal'].includes(kindOf(s))))return false;
  if(!isCU(p)&&!isCU(s)){
   if(NEWSHOEPANT[s]?NEWSHOEPANT[s].includes(p):GP[p].shoes.includes(s))return true;
-  const k=kindOf(s);
-  if(DRESSP.has(p)||shoeFz(s)>=3||!['formal','terr','run','canvas'].includes(k))return false;
-  if(k==='run'&&pantFz(p)>=2)return false;
   const pf=famOf('p',p),sf=famOf('s',s);
   if(pf===sf&&pf!=='negro')return false;
   if(clash(sf,pf))return false;
@@ -2077,7 +2085,7 @@ initStore();
 initAI();
 
 </script>
-<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 22 nov · 14:05</p>
+<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 22 nov · 14:25</p>
 <script>
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).catch(()=>{});});}
 </script>
