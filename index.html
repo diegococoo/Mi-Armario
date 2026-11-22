@@ -2173,7 +2173,9 @@ function tripCtx(day,fn){
 }
 function tripLimits(days){
  const n=days.length,anyF=days.some(d=>d.formal);
- return {p:(n<=2?1:n<=4?2:n<=8?3:4)+(anyF&&n>=3?1:0),s:trip.maxS,m:Math.min(4,Math.ceil(n/3)),c:1,w:n<=3?1:2};
+ const cold=trip.wx.includes('frio');
+ /* con frío se llevan más capas (sudaderas y jerseys) para alternar, y un segundo abrigo en viajes largos */
+ return {p:(n<=2?1:n<=4?2:n<=8?3:4)+(anyF&&n>=3?1:0),s:trip.maxS,m:cold?Math.min(7,Math.ceil(n/2)+1):Math.min(4,Math.ceil(n/3)),c:cold&&n>=6?2:1,w:n<=3?1:2};
 }
 const TRELAX=['w','m','c','p','s'];
 /* genera el outfit de un día respetando lo que ya hay en la maleta */
@@ -2307,7 +2309,7 @@ document.addEventListener('change',e=>{
 });
 
 </script>
-<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 22 nov · 14:30</p>
+<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 22 nov · 14:45</p>
 <script>
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).catch(()=>{});});}
 </script>
