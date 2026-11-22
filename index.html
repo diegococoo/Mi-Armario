@@ -949,6 +949,12 @@ function sockShoe(s,k){
  return true;
 }
 function pantShoe(p,s){
+ if(DRESSP.has(p)||(isCU(p)&&CU[p].type==='vestir')){
+  const okS=isCU(s)?['zapato','mocasines','botin'].includes(CU[s].sk):['anteMarron','anteMarino','nauticos','mocasin','oxford','oxfordNeg','botines'].includes(s);
+  if(!okS)return false;
+  const pf=famOf('p',p),sf=famOf('s',s);
+  return !(pf===sf&&ACC.has(pf));
+ }
  if(['oxford','oxfordNeg','mocasin'].includes(s)){
   const ok=DRESSP.has(p)||(isCU(p)?['cargo','chino','vestir'].includes(CU[p].type):['cMarino','cCamel','cBeige','cCrudo','cAcero','cGris'].includes(p));
   if(!ok)return false;
@@ -2085,7 +2091,7 @@ initStore();
 initAI();
 
 </script>
-<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 22 nov · 14:25</p>
+<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 22 nov · 14:40</p>
 <script>
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).catch(()=>{});});}
 </script>
