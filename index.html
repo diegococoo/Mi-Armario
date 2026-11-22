@@ -824,10 +824,8 @@ const WX={
 };
 const OCS={
  any:{n:'Cualquiera'},
- clase:{n:'Clase o trabajo',pref:[2,2],ban:v=>v.xmas},
- finde:{n:'Fin de semana',pref:[1,2]},
- cena:{n:'Cena o salir',pref:[2,3],ban:v=>(v.v==='m'&&v.t==='hoodie')||v.sk==='sandal'||v.pk==='short'||v.xmas},
- evento:{n:'Evento',pref:[3,3],ban:v=>(v.fz<=1&&v.v!=='k')||v.xmas||v.loud}
+ informal:{n:'Informal',pref:[1,2],ban:v=>v.fz>=3&&!['k','w'].includes(v.v)&&!(v.v==='b'&&v.t==='shirt')},
+ formal:{n:'Formal',pref:[2,3],ban:v=>(v.fz<=1&&!['k','w'].includes(v.v))||v.xmas||v.loud}
 };
 const PANTFZ={dustin:1,denim:1,negro:1,wrangler:1,levis:1,levisB:1,leeClaro:1,dustinClaro:1,grisaceo:1,leeGris:1,cMarino:2,cCamel:2,cBeige:2,cCrudo:2,cAcero:2,cGris:2};
 let wxs=new Set(),occs=new Set(),tuck=true;
@@ -1466,8 +1464,7 @@ function scoreOf(o,vars,opts){
    if(has('k')){const kf0=famOf('k',o.k);if(['burdeos','rojo','azul','petroleo'].includes(kf0))add(-9,'Las SL 72 con calcetín de ese color se pisan');else if(o.k==='invis')add(-3,'Las SL 72 piden calcetín visible');}
   }
   if(o.s==='blazer'&&up.some(f=>['verde','coral'].includes(f)))add(-5,'Los botines no casan con un arriba verde o coral');
-  if(occList().includes('cena')&&shoeFz(o.s)===1)add(-8,'Zapatilla de running: poco adecuada para una cena');
- }
+  }
  if(has('k')){
   const kf=famOf('k',o.k),K2=info('k',o.k);
   if(has('p')&&!K2.exec&&!['none','invis','tobill','nikeBl'].includes(o.k)){const pf1=famOf('p',o.p);if(pf1&&kf&&(pf1===kf||(['gris','antracita'].includes(pf1)&&['gris','antracita'].includes(kf))))add(-8,'El calcetín es del mismo tono que el pantalón: se pierde');else if(['marino','negro'].includes(kf)&&['marino','negro','denim'].includes(pf1))add(-4,'Calcetín oscuro con pantalón oscuro: sin contraste');}
@@ -2109,7 +2106,7 @@ initStore();
 initAI();
 
 </script>
-<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 22 nov · 15:20</p>
+<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 22 nov · 15:35</p>
 <script>
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).catch(()=>{});});}
 </script>
