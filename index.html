@@ -1154,7 +1154,7 @@ function midDraw(o){
  else if(o.t==='zip'){const zt=shade(c,-.45);s+=`<path d="M52,22 L84,14 L90,134 L50,134Z" fill="${c}" ${ST}/><path d="M148,22 L116,14 L110,134 L150,134Z" fill="${c}" ${ST}/><path d="M84,14 L78,8 L92,9 L96,34Z M116,14 L122,8 L108,9 L104,34Z" fill="${sh}" ${ST}/><path d="M90,34 L90,134 M110,34 L110,134" stroke="${zt}" stroke-width="2" fill="none"/><rect x="50" y="127" width="40" height="7" fill="${sh}"/><rect x="110" y="127" width="40" height="7" fill="${sh}"/><rect x="58" y="96" width="20" height="18" fill="none" stroke="${sh}" stroke-width="1.4"/><rect x="122" y="96" width="20" height="18" fill="none" stroke="${sh}" stroke-width="1.4"/>`;return s;}
  else s+=`<path d="M52,22 L82,14 Q100,26 118,14 L148,22 L150,134 L50,134Z" fill="${c}" ${ST}/>`;
  if(o.t==='knit')s+=`<path d="M82,14 Q100,31 118,14" fill="none" stroke="${sh}" stroke-width="6"/>`;
- if(o.t==='hzip'){const zc=o.zc||shade(c,.45);s+=`<path d="M82,14 L100,66 L118,14 L110,12 L100,40 L90,12Z" fill="${sh}"/><path d="M82,14 L74,19 L96,50Z M118,14 L126,19 L104,50Z" fill="${sh}" ${ST}/><path d="M82,14 L100,66 L118,14" fill="none" stroke="${zc}" stroke-width="2.2"/><rect x="97.5" y="64" width="5" height="7" rx="1" fill="${zc}"/>`;}
+ if(o.t==='hzip'){const zc=o.zc||shade(c,.45);s+=`<path d="M80,13 Q100,1 120,13 L118,17 Q100,8 82,17Z" fill="${sh}" ${ST}/><path d="M82,14 L100,64 L118,14" fill="none" stroke="${zc}" stroke-width="2.2" stroke-linejoin="round"/><rect x="97.5" y="62" width="5" height="7" rx="1" fill="${zc}"/>`;}
  s+=`<rect x="50" y="127" width="100" height="7" fill="${sh}"/>`;
  if(o.elbow)s+=`<ellipse cx="27" cy="96" rx="5" ry="9" transform="rotate(12 27 96)" fill="#5A3B28"/><ellipse cx="173" cy="96" rx="5" ry="9" transform="rotate(-12 173 96)" fill="#5A3B28"/>`;
  if(o.txt)s+=`<text x="100" y="88" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="28" fill="${shade(c,.14)}">${o.txt}</text>`;
@@ -1179,7 +1179,7 @@ function peek(b,m){
  if(tm==='hoodie')return tb==='tee'?`<path d="M88,24 Q100,34 112,24 L112,27 Q100,37 88,27Z" fill="${info('b',b).c}" ${ST}/>`:'';
  const col=info('b',b).c;
  if(tb==='tee')return tm==='knitV'?`<path d="M88,14 L100,34 L112,14 L108,14 L100,28 L92,14Z" fill="${col}" ${ST}/>`:`<path d="M86,13 Q100,25 114,13 L114,16 Q100,28 86,16Z" fill="${col}" ${ST}/>`;
- if(tm==='hzip')return tb==='tee'?`<path d="M93,10 L100,40 L107,10Z" fill="${col}" ${ST}/>`:`<path d="M84,8 L96,22 L90,26 L78,12Z M116,8 L104,22 L110,26 L122,12Z" fill="${col}" ${ST}/><path d="M95,22 L100,40 L105,22Z" fill="${col}"/>`;
+ if(tm==='hzip'){if(tb==='tee')return `<path d="M89,13 Q100,26 111,13 L111,16 Q100,29 89,16Z" fill="${col}" ${ST}/>`;const pl=shade(col,-.2);return `<path d="M88,9 L99,25 L93,30 L83,14Z M112,9 L101,25 L107,30 L117,14Z" fill="${col}" ${ST}/>`+(tb==='polo'?`<rect x="96.5" y="26" width="7" height="24" fill="${pl}"/><circle cx="100" cy="32" r="1.3" fill="${shade(col,.6)}"/><circle cx="100" cy="42" r="1.3" fill="${shade(col,.6)}"/>`:`<path d="M100,28 L100,58" stroke="${pl}" stroke-width="1.4"/><circle cx="100" cy="36" r="1.2" fill="${pl}"/><circle cx="100" cy="46" r="1.2" fill="${pl}"/>`);}
  return `<path d="M84,14 L100,29 L92,35 L77,19Z M116,14 L100,29 L108,35 L123,19Z" fill="${col}" ${ST}/>`;
 }
 function vestDraw(o){
@@ -1520,7 +1520,7 @@ function scoreOf(o,vars,opts){
  if(wxs.has('lluvia')){
   if(has('p')&&o.p){const lightChino=isCU(o.p)?(CU[o.p].type==='chino'&&lum(info('p',o.p).c)>.55):['cCrudo','cBeige'].includes(o.p);if(lightChino)add(-10,'Chino claro: con lluvia se mancha');}
   if(has('c')&&has('m')&&o.c&&o.c!=='none'&&o.m){
-   const hoodC=['tnfP','tnfN','hh','parka','napa'].includes(o.c)||(isCU(o.c)&&['tech','anorak','parka'].includes(CU[o.c].k));
+   const hoodC=['parka','tnfP'].includes(o.c);
    const tmm=topType('m',o.m);
    if(!hoodC&&tmm==='hoodie')add(5,'Abrigo sin capucha: la sudadera con capucha te cubre la cabeza');
    else if(hoodC&&['sweat','polosweat','hzip'].includes(tmm))add(5,'El abrigo ya lleva capucha: mejor sudadera sin capucha');
@@ -2106,7 +2106,7 @@ initStore();
 initAI();
 
 </script>
-<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 22 nov · 15:35</p>
+<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 22 nov · 15:50</p>
 <script>
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).catch(()=>{});});}
 </script>
