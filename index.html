@@ -2170,9 +2170,9 @@ initAI();
 
 /* ---------- Modo viaje: tú eliges las prendas y la app te dice qué combina ---------- */
 const TRIPLS='probador-viaje';
-let trip={days:5,wx:['templado'],pick:{},only:true,tab:'pick',plan:[],checked:{}};
+let trip={days:5,wx:['templado'],pick:{},showOff:{},tab:'pick',plan:[],checked:{}};
 try{const v=JSON.parse(localStorage.getItem(TRIPLS)||'null');if(v)trip=Object.assign(trip,v);}catch(e){}
-if(!trip.pick||Array.isArray(trip.pick))trip.pick={};
+if(!trip.pick||Array.isArray(trip.pick))trip.pick={};if(!trip.showOff)trip.showOff={};
 const tripSave=()=>{try{localStorage.setItem(TRIPLS,JSON.stringify(trip));}catch(e){}};
 const TGROUPS=[['p','Pantalones'],['b','Camisetas, polos y camisas'],['m','Sudaderas y jerseys'],['c','Abrigos'],['s','Calzado'],['w','Cinturones'],['k','Calcetines']];
 const TEXTRA=[['Ropa interior',d=>d+1],['Pijama',()=>1],['Neceser',()=>1],['Cargador y móvil',()=>1],['Documentación y billetes',()=>1]];
@@ -2293,16 +2293,16 @@ function tripPickHTML(){
  let h=`<div class="tcfg"><div class="kpis tk"><div class="kpi"><b>${nTot}</b><span>prendas elegidas</span></div><div class="kpi"><b>${C.total>=3000?'+3.000':C.total}</b><span>conjuntos posibles</span></div></div>
  <ul class="thints">${hints}</ul>
  ${orph.length?`<p class="thint warn">Sin pareja con lo elegido: ${orph.map(([v,id])=>esc2(info(v,id).n)).join(', ')}</p>`:''}
- <div class="row2"><button type="button" class="mini pri tgo" data-tp="gen">Preparar outfits</button>${nTot?'<button type="button" class="mini" data-tp="clearpick">Vaciar selección</button>':''}${chip0('only','Solo las que combinan',trip.only)}</div>
- <p class="thint">El número de cada prenda son los conjuntos que salen con lo que ya has elegido. Si una categoría está vacía, la app propone prendas al preparar los outfits.</p></div>`;
+ <div class="row2"><button type="button" class="mini pri tgo" data-tp="gen">Preparar outfits</button>${nTot?'<button type="button" class="mini" data-tp="clearpick">Vaciar selección</button>':''}</div>
+ <p class="thint">Según eliges, se van descartando las prendas que ya no combinan con tu selección (puedes verlas en cada categoría). El número de cada prenda son los conjuntos que salen con ella. Si una categoría está vacía, la app propone prendas al preparar los outfits.</p></div>`;
  C.vars.forEach(v=>{
   const name=(TGROUPS.find(x=>x[0]===v)||[0,v])[1],sel=C.pick[v];
   const groups=groupsOf(v).map(([gn,ids])=>{
-   const vis=ids.filter(id=>C.tiles[v][id]!==undefined&&(!trip.only||C.tiles[v][id]>0||sel.has(id)));if(!vis.length)return '';
+   const vis=ids.filter(id=>C.tiles[v][id]!==undefined&&(trip.showOff[v]||C.tiles[v][id]>0||sel.has(id)));if(!vis.length)return '';
    return `<div class="sub">${gn}</div><div class="grid">${vis.map(id=>{const n=C.tiles[v][id],on=sel.has(id),o=info(v,id);
-    return `<button type="button" class="tit${on?' on':''}${n===0?' zero':''}" data-tp="pk:${v}:${id}" aria-pressed="${on}"><div class="th">${thumb[v](id)}</div><span class="tcn">${n>=99?'99+':n}</span>${on?'<span class="tck">✓</span>':''}<span>${esc2(o.n)}</span></button>`;}).join('')}</div>`;}).join('');
-  const rec=C.rec[v];
-  h+=`<section class="tray"><div class="trh"><h2>${name}</h2><span class="cnt">${sel.size?sel.size+' elegidas':'ninguna elegida'}${rec?` · sugeridas ${rec}`:''}</span></div>${groups||'<p class="empty-tray">Nada combina con lo elegido. Quita alguna prenda o activa ver todas.</p>'}</section>`;
+    return `<button type="button" class="tit${on?' on':''}${n===0&&!on?' zero':''}" data-tp="pk:${v}:${id}" aria-pressed="${on}"${n===0&&!on?' aria-disabled="true"':''}><div class="th">${thumb[v](id)}</div><span class="tcn">${n>=99?'99+':n}</span>${on?'<span class="tck">✓</span>':''}<span>${esc2(o.n)}</span></button>`;}).join('')}</div>`;}).join('');
+  const rec=C.rec[v],all=Object.keys(C.tiles[v]),off=all.filter(id=>C.tiles[v][id]===0&&!sel.has(id)).length;
+  h+=`<section class="tray"><div class="trh"><h2>${name}</h2><span class="cnt">${sel.size?sel.size+' elegidas':'ninguna elegida'} · ${all.length-off} disponibles${rec?` · sugeridas ${rec}`:''}</span>${off?`<button type="button" class="tog" data-tp="off:${v}">${trip.showOff[v]?'Ocultar':'Ver'} ${off} descartadas</button>`:''}</div>${groups||'<p class="empty-tray">Nada combina con lo elegido. Quita alguna prenda.</p>'}</section>`;
  });
  return h;
 }
@@ -2331,8 +2331,8 @@ document.addEventListener('click',e=>{
  if(a==='dp'){trip.days=Math.min(21,trip.days+1);tripSave();renderTrip();return;}
  if(a==='wx'){const i=trip.wx.indexOf(x);if(i>=0)trip.wx.splice(i,1);else trip.wx.push(x);tripSave();renderTrip();return;}
  if(a==='tab'){trip.tab=x;tripSave();renderTrip();window.scrollTo({top:0});return;}
- if(a==='only'){trip.only=!trip.only;tripSave();renderTrip();return;}
- if(a==='pk'){const arr=tripPicked(x),i=arr.indexOf(y);if(i>=0)arr.splice(i,1);else arr.push(y);tripSave();const sy=window.scrollY;renderTrip();window.scrollTo({top:sy});return;}
+ if(a==='off'){trip.showOff[x]=!trip.showOff[x];tripSave();const sy=window.scrollY;renderTrip();window.scrollTo({top:sy});return;}
+ if(a==='pk'){if(b.getAttribute('aria-disabled')==='true')return;const arr=tripPicked(x),i=arr.indexOf(y);if(i>=0)arr.splice(i,1);else arr.push(y);tripSave();const sy=window.scrollY;renderTrip();window.scrollTo({top:sy});return;}
  if(a==='clearpick'){trip.pick={};tripSave();renderTrip();return;}
  if(a==='clear'){trip.checked={};tripSave();renderTrip();return;}
  if(a==='gen'){
@@ -2353,7 +2353,7 @@ document.addEventListener('change',e=>{
 });
 
 </script>
-<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 22 nov · 15:00</p>
+<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 22 nov · 15:10</p>
 <script>
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).catch(()=>{});});}
 </script>
