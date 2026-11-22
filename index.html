@@ -819,7 +819,8 @@ const WX={
  any:{n:'Cualquiera',modes:[0,1,2]},
  frio:{n:'Frío',modes:[1,2],def:2,ok:['all','fresco','frio']},
  templado:{n:'Templado',modes:[0,1,2],def:1,ok:['all','fresco','templado']},
- calor:{n:'Calor',modes:[0],def:0,ok:['all','verano']}
+ calor:{n:'Calor',modes:[0],def:0,ok:['all','verano']},
+ lluvia:{n:'Lluvia',modes:[1,2],def:2,ok:['all','fresco','templado','frio']}
 };
 const OCS={
  any:{n:'Cualquiera'},
@@ -829,10 +830,10 @@ const OCS={
  evento:{n:'Evento',pref:[3,3],ban:v=>(v.fz<=1&&v.v!=='k')||v.xmas||v.loud}
 };
 const PANTFZ={dustin:1,denim:1,negro:1,wrangler:1,levis:1,levisB:1,leeClaro:1,dustinClaro:1,grisaceo:1,leeGris:1,cMarino:2,cCamel:2,cBeige:2,cCrudo:2,cAcero:2,cGris:2};
-let wxs=new Set(),occs=new Set();
+let wxs=new Set(),occs=new Set(),tuck=true;
 const wxList=()=>[...wxs];const occList=()=>[...occs];
 const modesAllowed=()=>{if(!wxs.size)return [0,1,2];const m=new Set();wxs.forEach(w=>WX[w].modes.forEach(x=>m.add(x)));return [...m].sort();};
-const defMode=()=>wxs.has('frio')?2:wxs.has('templado')?1:wxs.has('calor')?0:mode;
+const defMode=()=>wxs.has('frio')||wxs.has('lluvia')?2:wxs.has('templado')?1:wxs.has('calor')?0:mode;
 
 /* ---------- Atributos ---------- */
 const isT=id=>!!T[id];
@@ -990,9 +991,7 @@ function pantSock(p,k){
  if(K2.exec)return !['levis','levisB','leeClaro','dustinClaro','grisaceo','wrangler'].includes(p)&&!(isCU(p)&&['short'].includes(CU[p].pk));
  if(k==='none'||k==='invis')return true;
  const pf=famOf('p',p),kf=famOf('k',k);
- if(pf&&kf&&(pf===kf||(['gris','antracita'].includes(pf)&&['gris','antracita'].includes(kf))))return false;
  if(K2.dress&&!['negro','marino','gris','antracita','denim','camel','beige','crema'].includes(pf))return false;
- if(['marino','negro'].includes(kf)&&['marino','negro','denim'].includes(pf))return false;
  return true;
 }
 const BROWNISH=new Set(['marron','camel','burdeos','oliva','beige','crema']);
@@ -1056,6 +1055,7 @@ function rebuild(){
 function ok(va,a,vb,b){return ORDER.indexOf(va)<ORDER.indexOf(vb)?PM[va+vb][a][b]:PM[vb+va][b][a];}
 function attrs(v,id){const o=info(v,id);return {v,fz:fzOf(v,id),t:(v==='b'||v==='m')?topType(v,id):null,sk:isCU(id)?CU[id].sk:null,pk:isCU(id)?CU[id].pk:null,xmas:v==='k'&&!!(o&&o.xmas),loud:v==='k'&&!!(o&&o.loud)};}
 function allowed(v,id){
+ if(wxs.has('lluvia')&&v==='s'&&(isCU(id)?['canvas','sandal','esp','clog','esploafer'].includes(CU[id].sk):(['anteMarron','anteMarino','superga','sl72','spNeg','gazelle','spGris','zueco'].includes(id)||SUMMERSHOE(id))))return false;
  if(wxs.size&&!wxList().some(w=>WX[w].ok.includes(seasonOf(id))))return false;
  if(wxs.size&&!wxs.has('calor')&&id==='none')return false;
  const at=attrs(v,id);if(occList().some(k=>OCS[k].ban&&OCS[k].ban(at)))return false;
@@ -1137,7 +1137,6 @@ function baseSVG(id){
 }
 function midDraw(o){
  const c=o.c,sh=shade(c,-.18);
- if(o.t==='zip')return topSVG({t:'zip',c});
  if(o.blocks)return topSVG({t:'sweat',c})+`<path d="M52,22 L82,14 Q100,26 118,14 L148,22 L149,50 L51,50Z" fill="#A9ABAF"/><path d="M82,14 Q100,31 118,14" fill="none" stroke="#8E9095" stroke-width="6"/><rect x="51" y="50" width="98" height="30" fill="#F2F2F0"/><path d="M52,22 Q30,28 26,56 L50,62Z" fill="#A9ABAF"/><path d="M148,22 Q170,28 174,56 L150,62Z" fill="#A9ABAF"/><path d="M26,56 L50,62 L50,80 L23,78Z" fill="#F2F2F0"/><path d="M174,56 L150,62 L150,80 L177,78Z" fill="#F2F2F0"/><text x="100" y="44" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="9" fill="#F2F2F0">MAKARTHY</text>`;
  if(o.lines)return topSVG({t:o.t,c})+o.lines.map(([t,fs,ff,y])=>`<text x="100" y="${y}" text-anchor="middle" font-family="${ff}" font-weight="700" font-size="${fs}" fill="${o.lc}">${t.replace('&','&amp;')}</text>`).join('')+`<rect x="97" y="90" width="6" height="5" rx="1" fill="#7A5634"/>`;
  if(o.word)return topSVG({t:o.t,c})+`<text x="100" y="80" text-anchor="middle" font-family="Georgia,serif" font-weight="700" font-size="21" fill="${o.wc}" stroke="#F2F2F2" stroke-width=".6">${o.word}</text><path d="M82,14 Q100,26 118,14" fill="none" stroke="${o.wc}" stroke-width="2"/>`;
@@ -1153,9 +1152,11 @@ function midDraw(o){
   return s;
  }
  if(o.t==='knitV')s+=`<path d="M52,22 L84,14 L100,54 L116,14 L148,22 L150,134 L50,134Z" fill="${c}" ${ST}/><path d="M84,14 L100,54 L116,14" fill="none" stroke="${sh}" stroke-width="4"/>`;
+ else if(o.t==='hzip')s+=`<path d="M52,22 L82,14 L100,66 L118,14 L148,22 L150,134 L50,134Z" fill="${c}" ${ST}/>`;
+ else if(o.t==='zip'){const zt=shade(c,-.45);s+=`<path d="M52,22 L84,14 L90,134 L50,134Z" fill="${c}" ${ST}/><path d="M148,22 L116,14 L110,134 L150,134Z" fill="${c}" ${ST}/><path d="M84,14 L78,8 L92,9 L96,34Z M116,14 L122,8 L108,9 L104,34Z" fill="${sh}" ${ST}/><path d="M90,34 L90,134 M110,34 L110,134" stroke="${zt}" stroke-width="2" fill="none"/><rect x="50" y="127" width="40" height="7" fill="${sh}"/><rect x="110" y="127" width="40" height="7" fill="${sh}"/><rect x="58" y="96" width="20" height="18" fill="none" stroke="${sh}" stroke-width="1.4"/><rect x="122" y="96" width="20" height="18" fill="none" stroke="${sh}" stroke-width="1.4"/>`;return s;}
  else s+=`<path d="M52,22 L82,14 Q100,26 118,14 L148,22 L150,134 L50,134Z" fill="${c}" ${ST}/>`;
  if(o.t==='knit')s+=`<path d="M82,14 Q100,31 118,14" fill="none" stroke="${sh}" stroke-width="6"/>`;
- if(o.t==='hzip'){const zc=o.zc||shade(c,.45);s+=`<path d="M80,6 L120,6 L119,20 Q100,27 81,20Z" fill="${sh}" ${ST}/><line x1="100" y1="8" x2="100" y2="66" stroke="${zc}" stroke-width="2.4"/><rect x="97.5" y="64" width="5" height="7" rx="1" fill="${zc}"/>`;}
+ if(o.t==='hzip'){const zc=o.zc||shade(c,.45);s+=`<path d="M82,14 L100,66 L118,14 L110,12 L100,40 L90,12Z" fill="${sh}"/><path d="M82,14 L74,19 L96,50Z M118,14 L126,19 L104,50Z" fill="${sh}" ${ST}/><path d="M82,14 L100,66 L118,14" fill="none" stroke="${zc}" stroke-width="2.2"/><rect x="97.5" y="64" width="5" height="7" rx="1" fill="${zc}"/>`;}
  s+=`<rect x="50" y="127" width="100" height="7" fill="${sh}"/>`;
  if(o.elbow)s+=`<ellipse cx="27" cy="96" rx="5" ry="9" transform="rotate(12 27 96)" fill="#5A3B28"/><ellipse cx="173" cy="96" rx="5" ry="9" transform="rotate(-12 173 96)" fill="#5A3B28"/>`;
  if(o.txt)s+=`<text x="100" y="88" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="28" fill="${shade(c,.14)}">${o.txt}</text>`;
@@ -1309,7 +1310,7 @@ function figure(o,vars,ghost){
  if(clipM)s+=`<defs><clipPath id="${fid}m"><rect x="60" y="-16" width="80" height="200"/></clipPath></defs>`;
  if(has('m')){s+=o.m?(clipM?`<g clip-path="url(#${fid}m)">${midSVG(o.m)}</g>`:midSVG(o.m)):g('m');if(o.m&&o.b){s+=peek(o.b,o.m);if(info('b',o.b)&&(topType('b',o.b)==='tee'||(topType('b',o.b)==='polo'&&topType('m',o.m)!=='pshirt')))s+=`<path d="M51,133 L149,133 L149,140 L51,140Z" fill="${info('b',o.b).c}" ${ST}/>`;}}
  if(has('c'))s+=o.c?coatSVG(o.c):g('c');
- if(has('w')&&o.w&&o.w!=='none'&&o.p&&!has('c')){const tm=has('m')&&o.m?topType('m',o.m):null;const tb=o.b?topType('b',o.b):null;if(!tm&&(tb==='shirt'||tb==='polo'))s+=beltDraw(o.w,55,134,90);}
+ if(has('w')&&o.w&&o.w!=='none'&&o.p&&!has('c')){const tm=has('m')&&o.m?topType('m',o.m):null;const tb=o.b?topType('b',o.b):null;if(!tm&&tb==='shirt'&&tuck)s+=beltDraw(o.w,55,134,90);}
  s+=o.s?shoe2(o.s):g('s');
  return `<svg viewBox="0 -16 200 318" role="img" aria-label="Conjunto">${s}</svg>`;
 }
@@ -1432,6 +1433,7 @@ function scoreOf(o,vars,opts){
    if(ACC.has(fb)&&!ACC.has(fm))addv(4,qu+' pone el toque de color');
    else if(ACC.has(fb)&&ACC.has(fm)&&!pb2&&fb!==fm)addv(-5,(zipOpen?'Lo de debajo y la capa':'Cuello y capa')+': dos colores fuertes que no casan');
    else if(!ACC.has(fb)&&!ACC.has(fm)&&!pb2&&d<=150&&d>=45)addv(-1,(zipOpen?'Lo de debajo y la capa':'Cuello y capa')+' en neutros sin mucha gracia');
+   if(['hzip','zip'].includes(topType('m',o.m))&&['polo','shirt'].includes(tb)&&d>=45&&!(ACC.has(fb)&&ACC.has(fm)&&!pb2&&fb!==fm))add(5,'La cremallera abierta deja ver '+(tb==='polo'?'el polo':'la camisa'));
    if(tb==='polo'&&!zipOpen){const ok=d>=45&&(pb2>0||d>150||(ACC.has(fb)&&!ACC.has(fm)));const bad=d<45||(ACC.has(fb)&&ACC.has(fm)&&!pb2&&fb!==fm);
     if(ok)addv(4,'El cuello del polo por fuera le da más estilo a la sudadera');else if(bad)addv(-3,'El cuello del polo por fuera no le aporta: mejor camiseta debajo');}
    if(tb==='polo'&&has('p')){const dp=cdist(info('b',o.b).c,info('p',o.p).c),fp=famOf('p',o.p);if(dp<40&&fp!==fb)addv(-3,'El polo que asoma por abajo casi se funde con el pantalón');}
@@ -1450,13 +1452,13 @@ function scoreOf(o,vars,opts){
    else add(-3,'El calzado añade otro color fuerte');
   }else if(cloth.some(x=>x.f===shoeF))add(3,'El calzado enlaza con la ropa');
   if(has('p')&&(GOODSHOE[o.s]||[]).includes(o.p))add(4,'Calzado ideal para ese pantalón');
-  if(['anteMarino','nauticos','sl72','spNeg','gazelle','spGris'].includes(o.s))add(3,'Zapato de los que más te pones');
 
   const X=SHOEX[o.s];
   if(X){const fs=[...new Set(cloth.map(x=>x.f))];const g=fs.filter(f=>X.good.includes(f)),b=fs.filter(f=>X.bad.includes(f));
    if(g.length)add(Math.min(6,2*g.length),`Los tonos ${X.lab} de las zapatillas van con ${g.map(f=>famName(f).toLowerCase()).join(', ')}`);
    if(b.length)add(-3*b.length,`Las zapatillas (${X.lab}) no casan con ${b.map(f=>famName(f).toLowerCase()).join(', ')}`);}
  }
+ {const fv=ORDER.filter(v=>has(v)&&o[v]&&o[v]!=='none'&&favG(o[v]));if(fv.length)add(Math.min(6,3*fv.length),fv.length===1?'Prenda de las que más te pones':'Prendas de las que más te pones ('+fv.length+')');}
  if(has('s')){
   const up=cloth.filter(x=>x.v!=='p').map(x=>x.f);
   if(o.s==='sl72'){
@@ -1468,6 +1470,7 @@ function scoreOf(o,vars,opts){
  }
  if(has('k')){
   const kf=famOf('k',o.k),K2=info('k',o.k);
+  if(has('p')&&!K2.exec&&!['none','invis','tobill','nikeBl'].includes(o.k)){const pf1=famOf('p',o.p);if(pf1&&kf&&(pf1===kf||(['gris','antracita'].includes(pf1)&&['gris','antracita'].includes(kf))))add(-8,'El calcetín es del mismo tono que el pantalón: se pierde');else if(['marino','negro'].includes(kf)&&['marino','negro','denim'].includes(pf1))add(-4,'Calcetín oscuro con pantalón oscuro: sin contraste');}
   if((K2.short||K2.sport)&&has('p')&&isCU(o.p)&&CU[o.p].pk==='short')add(4,'Calcetín corto o deportivo, como piden las bermudas');
   if(K2.sport&&has('s')&&['run','terr'].includes(kindOf(o.s)))add(3,'Calcetín deportivo con zapatilla');
   const bv=(has('m')&&!has('c')&&info('m',o.m).back)||(has('b')&&!has('m')&&!has('c')&&info('b',o.b)&&info('b',o.b).back);
@@ -1485,7 +1488,7 @@ function scoreOf(o,vars,opts){
    if(mUp&&mSh)add(10,'El calcetín repite un color de la prenda de arriba y del calzado');
    else if(mUp)add(8,'El calcetín repite un color de la prenda de arriba');
    else if(mSh)add(8,'El calcetín repite el color del calzado');
-   else if(mAny)add(2,'El calcetín solo repite el color del pantalón');
+   else if(mAny&&!(has('p')&&eq(kf,famOf('p',o.p))))add(2,'El calcetín solo repite el color del pantalón');
    else if(K2.dress&&has('s')&&shoeFz(o.s)>=3)add(4,'Calcetín fino, va con zapato de vestir');
    else if(['marino','gris','negro','antracita'].includes(kf))add(-1,'Calcetín discreto, pero no enlaza con la prenda de arriba ni con el calzado');
    else if(!kBack)add(-6,'El calcetín no combina ni con la prenda de arriba ni con el calzado');
@@ -1506,7 +1509,7 @@ function scoreOf(o,vars,opts){
   if(dark)add(-5,'Todo muy oscuro, sin un punto de luz');}
  if(has('w')&&o.w!=='none'&&has('s')){const bt=beltTone(o.w),st=shoeTone(o.s);if(bt!=='otro'&&bt===st)add(5,'Cinturón a juego con el zapato');else if(o.w==='beTrenz'&&!SUMMERSHOE(o.s)&&shoeFz(o.s)<=2)add(2,'Cinturón trenzado, toque informal');}
  if(has('b')&&!has('m')&&!has('c')&&has('s')&&topType('b',o.b)==='polo'&&kindOf(o.s)==='run'&&o.s!=='nb327')add(-3,'Polo a la vista con zapatilla de running: mejor con algo encima o con otra zapatilla');
- if(has('w')&&o.w==='none'&&has('p')&&(DRESSP.has(o.p)||pantFz(o.p)>=2)&&has('b')&&['shirt','polo'].includes(topType('b',o.b))&&!has('m'))add(-3,'Con camisa o polo por dentro pide cinturón');
+ if(tuck&&has('w')&&has('b')&&topType('b',o.b)==='shirt'&&!has('c')&&(!has('m')||['hzip','zip','cardigan'].includes(topType('m',o.m)))){if(o.w!=='none')add(6,'Con la camisa por dentro luce el cinturón');else add(-6,'Con la camisa por dentro hace falta cinturón');}
  let nm=0;if(has('p')&&famOf('p',o.p)==='marino')nm++;['b','m','c'].forEach(v=>{if(has(v)&&famOf(v,o[v])==='marino')nm++;});
  if(nm===2)add(-2,'Bastante azul marino');
  /* ocasión */
@@ -1517,6 +1520,7 @@ function scoreOf(o,vars,opts){
  /* tiempo */
  if(wxs.has('calor')&&wxs.size===1){const light=cloth.filter(x=>lum(x.c)>.3).length;if(light>=2)add(4,'Colores claros para el calor');
   if(has('p')&&isCU(o.p)&&['short','lino'].includes(CU[o.p].pk))add(4,'Prenda fresca de verano');}
+ if(wxs.has('lluvia')&&has('c')&&o.c&&o.c!=='none'){if(['tnfP','tnfN','hh','napa','parka','gabardina'].includes(o.c)||(isCU(o.c)&&['tech','anorak','parka'].includes(CU[o.c].k)))add(6,'Abrigo que aguanta la lluvia');else add(-4,'Este abrigo no protege bien de la lluvia');}
  if(wxs.has('frio')&&has('c')&&['parka'].includes(isCU(o.c)?CU[o.c].k:CO[o.c].k))add(3,'Bien abrigado para el frío');
  if(!(opts&&opts.noPref))prefTerm(o,vars,add);
  why.forEach(([d])=>s+=d);
@@ -1578,6 +1582,8 @@ function applyEdits(){
  if(!ORIG){ORIG={};ORDER.forEach(v=>BASEDOM[v].forEach(id=>{const b=getBase(id);if(b)ORIG[id]=b;}));}
  Object.entries(ORIG).forEach(([id,o])=>{const e=store.edits[id];setBase(id,e?{n:e.n||o.n,c:e.c||o.c,fam:e.fam||o.fam}:o);});
 }
+const DEFFAV=['anteMarino','nauticos','sl72','spNeg','gazelle','spGris'];
+const favG=id=>{const e=store.edits[id];return e&&e.fav!==undefined?!!e.fav:DEFFAV.includes(id);};
 const isHidden=id=>!!(store.edits[id]&&store.edits[id].hidden);
 function applyCustom(){
  applyEdits();
@@ -1642,8 +1648,8 @@ async function initStore(){
 /* ---------- Estado ---------- */
 let sel={p:null,b:null,m:null,c:null,s:null,k:null,w:null};
 let mode=1,view='probador',showOff={},dayInfo=null;
-try{const v=JSON.parse(localStorage.getItem('probador3')||'null');if(v){if(typeof v.mode==='number')mode=v.mode;if(v.showOff)showOff=v.showOff;const W0=Array.isArray(v.wx)?v.wx:(v.wx&&v.wx!=='any'?[v.wx]:[]);W0.forEach(w=>{if(WX[w]&&w!=='any')wxs.add(w)});const O0=Array.isArray(v.occ)?v.occ:(v.occ&&v.occ!=='any'?[v.occ]:[]);O0.forEach(k=>{if(OCS[k]&&k!=='any')occs.add(k)});}}catch(e){}
-const save=()=>{try{localStorage.setItem('probador3',JSON.stringify({mode,showOff,wx:wxList(),occ:occList()}))}catch(e){}};
+try{const v=JSON.parse(localStorage.getItem('probador3')||'null');if(v){if(typeof v.mode==='number')mode=v.mode;if(v.showOff)showOff=v.showOff;if(v.tuck===false)tuck=false;const W0=Array.isArray(v.wx)?v.wx:(v.wx&&v.wx!=='any'?[v.wx]:[]);W0.forEach(w=>{if(WX[w]&&w!=='any')wxs.add(w)});const O0=Array.isArray(v.occ)?v.occ:(v.occ&&v.occ!=='any'?[v.occ]:[]);O0.forEach(k=>{if(OCS[k]&&k!=='any')occs.add(k)});}}catch(e){}
+const save=()=>{try{localStorage.setItem('probador3',JSON.stringify({mode,showOff,tuck,wx:wxList(),occ:occList()}))}catch(e){}};
 const esc2=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
 const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
 const fmtDate=s=>{const [y,m,d]=s.slice(0,10).split('-');const t=s.length>11?' · '+s.slice(11,13)+':'+s.slice(13,15):'';return `${+d} ${['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'][+m-1]} ${y}${t}`;};
@@ -1669,7 +1675,7 @@ const likeIdOf=favIdOf;
 /* ---------- Render: probador ---------- */
 function renderCtx(){
  const chip=(g,k,n,on)=>`<button type="button" class="chip" id="${g}-${k}" data-${g}="${k}" aria-pressed="${on}">${n}</button>`;
- document.getElementById('ctx').innerHTML=`<div class="ctxrow"><span>Ocasión</span>${Object.entries(OCS).map(([k,o])=>chip('occ',k,o.n,k==='any'?!occs.size:occs.has(k))).join('')}</div><div class="ctxrow"><span>Tiempo</span>${Object.entries(WX).map(([k,o])=>chip('wx',k,o.n,k==='any'?!wxs.size:wxs.has(k))).join('')}</div><p style="margin:0;color:var(--muted);font-size:12px">Puedes marcar varias. En tiempo se suman las prendas de cada uno; en ocasión, el conjunto tiene que valer para todas.</p>`;
+ document.getElementById('ctx').innerHTML=`<div class="ctxrow"><span>Ocasión</span>${Object.entries(OCS).map(([k,o])=>chip('occ',k,o.n,k==='any'?!occs.size:occs.has(k))).join('')}</div><div class="ctxrow"><span>Tiempo</span>${Object.entries(WX).map(([k,o])=>chip('wx',k,o.n,k==='any'?!wxs.size:wxs.has(k))).join('')}</div><div class="ctxrow"><span>Camisa</span>${chip('tk','in','Por dentro',tuck)}${chip('tk','out','Por fuera',!tuck)}</div><p style="margin:0;color:var(--muted);font-size:12px">Puedes marcar varias. En tiempo se suman las prendas de cada uno; en ocasión, el conjunto tiene que valer para todas.</p>`;
 }
 function renderScore(){
  const el=document.getElementById('score'),r=scoreOf(sel);
@@ -1924,8 +1930,8 @@ function wardrobeHTML(){
    <label>Nombre<input id="ed-name" type="text" maxlength="60" value="${esc2(d.n)}"></label>
    <div><span class="lbl2">Color</span><div class="swatches">${PALETTE.map(([f,c,n])=>`<button type="button" id="esw-${f}" data-esw="${f}" style="background:${c}" aria-pressed="${f===d.fam}" title="${n}" aria-label="${n}"></button>`).join('')}</div></div>
    <div class="wbtns"><button type="button" class="mini pri" id="ed-save" data-edsave="${id}">Guardar</button><button type="button" class="mini" id="ed-cancel" data-edcancel="1">Cancelar</button>${!mine&&edited?`<button type="button" class="mini" id="ed-reset" data-edreset="${id}">Volver al original</button>`:''}</div></div></li>`;}
-  return `<li class="wrow${hid?' hid':''}"><div class="th">${thumb[mgr.v](id)}</div><div class="wtxt"><b>${esc2(o.n)}</b><span>${esc2(famName(famOf(mgr.v,id)))}${mine?' · añadida por ti':''}${hid?' · retirada':''}</span></div><div class="wbtns">${hid?`<button type="button" class="mini pri" id="wr-${id}" data-unhide="${id}">Recuperar</button>`:`<button type="button" class="mini" id="we-${id}" data-edit="${id}">Editar</button><button type="button" class="mini" id="wh-${id}" data-hide="${id}">${mine?'Borrar':'Retirar'}</button>`}</div></li>`;};
- return `<div class="stcard"><h3>Todo mi armario</h3><p>Cambia el nombre o el color de cualquier prenda, o retira las que tires o no uses. Las retiradas dejan de salir en el probador y puedes recuperarlas cuando quieras.</p>
+  return `<li class="wrow${hid?' hid':''}"><div class="th">${thumb[mgr.v](id)}</div><div class="wtxt"><b>${esc2(o.n)}</b><span>${esc2(famName(famOf(mgr.v,id)))}${mine?' · añadida por ti':''}${hid?' · retirada':''}</span></div><div class="wbtns">${hid?`<button type="button" class="mini pri" id="wr-${id}" data-unhide="${id}">Recuperar</button>`:`<button type="button" class="mini" id="wf-${id}" data-fav="${id}" aria-pressed="${favG(id)}" aria-label="${favG(id)?'Quitar de las que más te pones':'Marcar como una de las que más te pones'}">${favG(id)?'★':'☆'}</button><button type="button" class="mini" id="we-${id}" data-edit="${id}">Editar</button><button type="button" class="mini" id="wh-${id}" data-hide="${id}">${mine?'Borrar':'Retirar'}</button>`}</div></li>`;};
+ return `<div class="stcard"><h3>Todo mi armario</h3><p>Cambia el nombre o el color de cualquier prenda, o retira las que tires o no uses. Con la estrella ★ marcas las que más te pones y suman puntos. Las retiradas dejan de salir en el probador y puedes recuperarlas cuando quieras.</p>
   <div class="wtools"><select id="mgr-v" aria-label="Categoría">${ORDER.map(v=>`<option value="${v}" ${v===mgr.v?'selected':''}>${VLABEL[v]} (${new Set(allIds(v)).size})</option>`).join('')}</select><input id="mgr-q" type="search" placeholder="Buscar por nombre o marca" value="${esc2(mgr.q)}"></div>
   <ul class="wlist">${active.map(row).join('')||'<li class="empty-tray">Nada con ese nombre.</li>'}</ul>
   ${retired.length?`<h4 class="wsub">Retiradas (${retired.length})</h4><ul class="wlist">${retired.map(row).join('')}</ul>`:''}</div>`;
@@ -1988,6 +1994,7 @@ document.addEventListener('click',async e=>{
  const t=e.target;
  const vw=t.closest('[data-view]');if(vw){view=vw.dataset.view;renderAll();window.scrollTo({top:0});return;}
  const oc=t.closest('[data-occ]');if(oc){const k=oc.dataset.occ;if(k==='any')occs.clear();else if(occs.has(k))occs.delete(k);else occs.add(k);save();ORDER.forEach(v=>{if(sel[v]&&!allowed(v,sel[v]))sel[v]=null;});renderAll();return;}
+ const tkb=t.closest('[data-tk]');if(tkb){tuck=tkb.dataset.tk==='in';save();renderAll();return;}
  const w=t.closest('[data-wx]');if(w){const k=w.dataset.wx;if(k==='any')wxs.clear();else if(wxs.has(k))wxs.delete(k);else wxs.add(k);if(wxs.size===1||!modesAllowed().includes(mode))mode=defMode();save();ORDER.forEach(v=>{if(sel[v]&&!allowed(v,sel[v]))sel[v]=null;});renderAll();return;}
  const md=t.closest('[data-mode]');if(md&&!md.disabled){mode=+md.dataset.mode;save();renderAll();return;}
  const it=t.closest('.it');
@@ -2018,6 +2025,7 @@ document.addEventListener('click',async e=>{
   if(a==='reset'){if(ph.src)URL.revokeObjectURL(ph.src);ph={st:'idle',items:[]};renderAdd();return;}
   if(a==='save'){await savePhotoItems();return;}}
  const pc=t.closest('[data-phc]');if(pc){const i=+pc.dataset.phc;ph.items[i].on=pc.checked;renderAdd();return;}
+ const fvb=t.closest('[data-fav]');if(fvb){const id=fvb.dataset.fav;const e=Object.assign({},store.edits[id]||{});e.fav=!favG(id);await put('edits',id,e);return;}
  const ed=t.closest('[data-edit]');if(ed){const id=ed.dataset.edit,o=info(mgr.v,id);mgr.edit=id;mgr.draft={n:o.n,fam:famOf(mgr.v,id)};renderAdd();const i=document.getElementById('ed-name');if(i)i.focus();return;}
  const es=t.closest('[data-esw]');if(es){const i=document.getElementById('ed-name');if(i)mgr.draft.n=i.value;mgr.draft.fam=es.dataset.esw;renderAdd();return;}
  if(t.closest('[data-edcancel]')){mgr.edit=null;renderAdd();return;}
@@ -2025,7 +2033,7 @@ document.addEventListener('click',async e=>{
   if(store.custom[id]){const d=Object.assign({},store.custom[id],{n,fam,c:fam!==store.custom[id].fam?PALC[fam]:store.custom[id].c});mgr.edit=null;await put('custom',id,d);}
   else{const prev=store.edits[id]||{};const e=Object.assign({},prev,{n});if(fam!==before){e.fam=fam;e.c=PALC[fam];}mgr.edit=null;await put('edits',id,e);}
   toast('Prenda actualizada');return;}
- const rs=t.closest('[data-edreset]');if(rs){const id=rs.dataset.edreset,prev=store.edits[id]||{};mgr.edit=null;const keep={};['hidden','photo','photoData'].forEach(k=>{if(prev[k])keep[k]=prev[k];});if(Object.keys(keep).length)await put('edits',id,keep);else await del('edits',id);toast('Prenda devuelta a su nombre y color originales');return;}
+ const rs=t.closest('[data-edreset]');if(rs){const id=rs.dataset.edreset,prev=store.edits[id]||{};mgr.edit=null;const keep={};['hidden','photo','photoData','fav'].forEach(k=>{if(prev[k])keep[k]=prev[k];});if(Object.keys(keep).length)await put('edits',id,keep);else await del('edits',id);toast('Prenda devuelta a su nombre y color originales');return;}
  const hd=t.closest('[data-hide]');if(hd){const id=hd.dataset.hide;
   if(hd.dataset.confirm!=='1'){hd.dataset.confirm='1';hd.textContent='¿Seguro?';setTimeout(()=>{if(hd.isConnected){hd.dataset.confirm='';hd.textContent=store.custom[id]?'Borrar':'Retirar';}},3000);return;}
   if(store.custom[id]){await del('custom',id);toast('Prenda borrada');}else{await put('edits',id,Object.assign({},store.edits[id]||{},{hidden:true}));toast('Prenda retirada. Puedes recuperarla abajo.');}return;}
@@ -2091,7 +2099,7 @@ initStore();
 initAI();
 
 </script>
-<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 22 nov · 14:40</p>
+<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 22 nov · 15:00</p>
 <script>
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).catch(()=>{});});}
 </script>
