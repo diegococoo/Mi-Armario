@@ -1163,9 +1163,12 @@ function shirtDraw(c,f,linen){
  /* por dentro: el cuerpo se ajusta hasta la cintura del pantalón; por fuera: faldón curvo que tapa la cintura */
  const body=v==='in'?`${top} L149,66 Q150,104 144,134 L56,134 Q50,104 51,66Z`
   :v==='out'?`${top} L150,96 L151,146 Q148,160 126,164 Q100,168 74,164 Q52,160 49,146 L50,96Z`
+  :v==='hid'?`${top} L150,133 L50,133Z`
+  :v==='outm'?`${top} L149,100 L150,138 Q148,146 128,149 Q100,152 72,149 Q52,146 50,138 L51,100Z`
   :`${top} L150,140 L50,140Z`;
- const bot=v==='in'?134:v==='out'?166:140;
+ const bot=v==='in'?134:v==='out'?166:v==='hid'?133:v==='outm'?150:140;
  const extra=v==='in'?`<path d="M62,112 Q68,124 63,133 M72,118 Q76,126 74,133 M138,112 Q132,124 137,133 M128,118 Q124,126 126,133" stroke="${sh}" stroke-width=".9" fill="none" opacity=".55"/><path d="M57,100 Q54,118 57,132 M143,100 Q146,118 143,132" stroke="#000" stroke-width="2" fill="none" opacity=".05"/>`
+  :v==='outm'?`<path d="M50,138 Q52,146 72,149 Q100,152 128,149 Q148,146 150,138" fill="none" stroke="${sh}" stroke-width="1.4" opacity=".5"/>`
   :v==='out'?`<path d="M50,146 Q52,158 74,164 Q100,168 126,164 Q148,158 150,146" fill="none" stroke="${sh}" stroke-width="1.6" opacity=".5"/><path d="M50,146 L51,152 M150,146 L149,152" stroke="${sh}" stroke-width="1.2"/><path d="M62,138 Q66,150 61,158 M138,138 Q134,150 139,158" stroke="${sh}" stroke-width=".9" fill="none" opacity=".5"/><circle cx="100" cy="148" r="1.5" fill="${shade(c,-.3)}"/>`:'';
  return `${LSLV(f)}<path d="M18,120 L37,123 L37,129 L18,126Z" fill="${sh}"/><path d="M182,120 L163,123 L163,129 L182,126Z" fill="${sh}"/>
  <path d="${body}" fill="${f}" ${ST}/>${linen?`<path d="${body}" fill="url(#pt-lino)"/>`:''}${extra}
@@ -1347,7 +1350,7 @@ function figure(o,vars,ghost){
  let s=clipB?`<defs><clipPath id="${fid}b"><rect x="49" y="-16" width="102" height="160"/></clipPath></defs>`:'';
  s+=o.k?sock2(o.k):g('k');
  s+=o.p?pantDraw(o.p):g('p');
- TUCKV=(o.b&&o.p&&!(has('m')&&o.m)&&topType('b',o.b)==='shirt')?(tuck?'in':'out'):null;
+ TUCKV=(o.b&&topType('b',o.b)==='shirt')?(has('m')&&o.m?(tuck?'hid':'outm'):(o.p?(tuck?'in':'out'):null)):null;
  s+=o.b?(clipB?`<g clip-path="url(#${fid}b)">${baseSVG(o.b)}</g>`:baseSVG(o.b)):g('b');
  TUCKV=null;
  const clipM=has('c')&&o.c&&o.m&&!['vest','vestp'].includes(info('c',o.c).k);
@@ -2409,7 +2412,7 @@ document.addEventListener('change',e=>{
 });
 
 </script>
-<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 22 nov · 16:15</p>
+<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 22 nov · 16:30</p>
 <script>
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).catch(()=>{});});}
 </script>
