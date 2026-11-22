@@ -1531,7 +1531,13 @@ function scoreOf(o,vars,opts){
  if(wxs.has('frio')&&has('c')&&['parka'].includes(isCU(o.c)?CU[o.c].k:CO[o.c].k))add(3,'Bien abrigado para el frío');
  if(!(opts&&opts.noPref))prefTerm(o,vars,add);
  why.forEach(([d])=>s+=d);
- if(s>70)s=70+30*Math.tanh((s-70)/40);
+ /* Si la suma pasa de 100, el pantalón que peor encaja resta nota (en vez de quedarse todos en 100) */
+ if(s>100&&has('p')){
+  let pq=0;cloth.forEach(x=>{if(x.v!=='p')pq+=pairBonus(famOf('p',o.p),x.f);});pq=Math.min(8,pq);
+  why.forEach(([d,t])=>{if(/pantal|arriba y abajo|chino claro/i.test(t||''))pq+=d;});
+  const pen=Math.max(0,Math.min(18,15-pq));
+  if(pen>0){s=Math.min(s,100-pen);why.push([-pen,'El pantalón es de los que menos encajan con el resto del conjunto']);}
+ }
  s=Math.max(5,Math.min(100,Math.round(s)));
  return {s,why:why.filter(w=>w[1]),done:vars.every(v=>o[v])};
 }
@@ -2107,7 +2113,7 @@ initStore();
 initAI();
 
 </script>
-<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 22 nov · 16:05</p>
+<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 22 nov · 13:50</p>
 <script>
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).catch(()=>{});});}
 </script>
