@@ -2170,11 +2170,12 @@ initAI();
 
 /* ---------- Modo viaje: tú eliges las prendas y la app te dice qué combina ---------- */
 const TRIPLS='probador-viaje';
-let trip={days:5,wx:['templado'],pick:{},showOff:{},tab:'pick',plan:[],checked:{}};
+let trip={days:5,wx:['templado'],layer:true,pick:{},showOff:{},tab:'pick',plan:[],checked:{}};
 try{const v=JSON.parse(localStorage.getItem(TRIPLS)||'null');if(v)trip=Object.assign(trip,v);}catch(e){}
 if(!trip.pick||Array.isArray(trip.pick))trip.pick={};if(!trip.showOff)trip.showOff={};
+if((trip.plan||[]).some(d=>d&&d.vars&&(d.vars.includes('c')||(!!trip.layer)!==d.vars.includes('m'))))trip.plan=[];
 const tripSave=()=>{try{localStorage.setItem(TRIPLS,JSON.stringify(trip));}catch(e){}};
-const TGROUPS=[['p','Pantalones'],['b','Camisetas, polos y camisas'],['m','Sudaderas y jerseys'],['c','Abrigos'],['s','Calzado'],['w','Cinturones'],['k','Calcetines']];
+const TGROUPS=[['p','Pantalones'],['b','Camisetas, polos y camisas'],['m','Sudaderas y jerseys'],['s','Calzado'],['w','Cinturones'],['k','Calcetines']];
 const TEXTRA=[['Ropa interior',d=>d+1],['Pijama',()=>1],['Neceser',()=>1],['Cargador y móvil',()=>1],['Documentación y billetes',()=>1]];
 const tripPicked=(v)=>trip.pick[v]||(trip.pick[v]=[]);
 
@@ -2184,11 +2185,12 @@ function tripCtx(day,fn){
  const w=new Set(trip.wx);if(day&&day.rain)w.add('lluvia');
  wxs=w;occs=new Set(day&&day.formal?['formal']:[]);
  mode=1;mode=defMode();if(!modesAllowed().includes(mode))mode=modesAllowed()[0];
- try{return fn(MODES[mode].vars,mode);}finally{wxs=sw;occs=so;mode=sm;}
+ const vs=trip.layer?['p','b','m','s','k','w']:['p','b','s','k','w'];
+ try{return fn(vs,trip.layer?1:0);}finally{wxs=sw;occs=so;mode=sm;}
 }
 /* cuántas prendas de cada tipo suelen hacer falta */
 function tripRec(n,cold){
- return {p:n<=2?1:n<=4?2:n<=8?3:4,b:n,m:cold?Math.min(7,Math.ceil(n/2)+1):Math.min(4,Math.ceil(n/3)),c:cold&&n>=6?2:1,s:n<=2?2:3};
+ return {p:n<=2?1:n<=4?2:n<=8?3:4,b:n,m:cold?Math.min(7,Math.ceil(n/2)+1):Math.min(4,Math.ceil(n/3)),s:n<=2?2:3};
 }
 const TEMPTY=()=>({p:null,b:null,m:null,c:null,s:null,k:null,w:null});
 
@@ -2271,7 +2273,7 @@ function tripRegenDay(i){
 function tripRows(){
  const g={};TGROUPS.forEach(([v])=>g[v]=new Map());
  TGROUPS.forEach(([v])=>(trip.pick[v]||[]).forEach(id=>{if(id!=='none'&&info(v,id))g[v].set(id,{days:[],sug:false});}));
- trip.plan.forEach((d,i)=>{if(!d.o)return;d.vars.forEach(v=>{const id=d.o[v];if(!id||id==='none')return;if(!g[v].has(id))g[v].set(id,{days:[],sug:true});g[v].get(id).days.push(i+1);});});
+ trip.plan.forEach((d,i)=>{if(!d.o)return;d.vars.forEach(v=>{const id=d.o[v];if(!g[v]||!id||id==='none')return;if(!g[v].has(id))g[v].set(id,{days:[],sug:true});g[v].get(id).days.push(i+1);});});
  return g;
 }
 
@@ -2282,7 +2284,8 @@ function renderTrip(){
  const nPick=TGROUPS.reduce((a,[v])=>a+(trip.pick[v]||[]).filter(id=>id!=='none').length,0);
  let h=`<div class="vh"><h2>Viaje</h2><p>Elige tú la maleta</p></div>
  <div class="tcfg"><div class="ctxrow"><span>Días</span><span class="tstep"><button type="button" class="mini" data-tp="dm" aria-label="Un día menos">−</button><b>${trip.days}</b><button type="button" class="mini" data-tp="dp" aria-label="Un día más">+</button></span></div>
- <div class="ctxrow"><span>Tiempo</span>${Object.keys(WXN).map(k=>chip0('wx:'+k,WXN[k],trip.wx.includes(k))).join('')}</div></div>
+ <div class="ctxrow"><span>Tiempo</span>${Object.keys(WXN).map(k=>chip0('wx:'+k,WXN[k],trip.wx.includes(k))).join('')}</div>
+ <div class="ctxrow"><span>Capa</span>${chip0('ly:1','Con capa',trip.layer)}${chip0('ly:0','Sin capa',!trip.layer)}</div></div>
  <div class="ttabs">${[['pick','Elegir'+(nPick?` (${nPick})`:'')],['plan','Outfits'],['list','Lista']].map(([k,n])=>chip0('tab:'+k,n,trip.tab===k)).join('')}</div>`;
  if(trip.tab==='pick')h+=tripPickHTML();
  else if(!trip.plan.length||!trip.plan.every(d=>d&&d.o))h+=`<div class="empty-v">Aún no hay outfits. Elige prendas en «Elegir» y pulsa «Preparar outfits».<br><br><button type="button" class="mini pri" data-tp="gen">Preparar outfits</button></div>`;
@@ -2291,7 +2294,7 @@ function renderTrip(){
 }
 function tripPickHTML(){
  const C=tripCalc();
- const lab={p:'pantalones',b:'arriba',m:'capas',c:'abrigo',s:'zapatos'};
+ const lab={p:'pantalones',b:'arriba',m:'capas',s:'zapatos'};
  const nP=Object.fromEntries(C.core.map(v=>[v,C.pick[v].size]));
  const orph=[];C.vars.forEach(v=>{C.pick[v].forEach(id=>{if(id!=='none'&&!C.tiles[v][id])orph.push([v,id]);});});
  const hints=C.core.map(v=>{const n=nP[v],r=C.rec[v],ok=n>=r;return `<li class="${ok?'ok':n?'mid':'no'}"><b>${n}</b> de ${r} ${lab[v]}${ok?'':n?` · ${r-n===1?'falta 1':'faltan '+(r-n)}`:' · sin elegir'}</li>`;}).join('');
@@ -2338,6 +2341,7 @@ document.addEventListener('click',e=>{
  if(a==='dm'){trip.days=Math.max(1,trip.days-1);tripSave();renderTrip();return;}
  if(a==='dp'){trip.days=Math.min(21,trip.days+1);tripSave();renderTrip();return;}
  if(a==='wx'){const i=trip.wx.indexOf(x);if(i>=0)trip.wx.splice(i,1);else trip.wx.push(x);tripSave();renderTrip();return;}
+ if(a==='ly'){trip.layer=x==='1';trip.plan=[];tripSave();renderTrip();return;}
  if(a==='tab'){trip.tab=x;tripSave();renderTrip();window.scrollTo({top:0});return;}
  if(a==='off'){trip.showOff[x]=!trip.showOff[x];tripSave();const sy=window.scrollY;renderTrip();window.scrollTo({top:sy});return;}
  if(a==='pk'){if(b.getAttribute('aria-disabled')==='true')return;const arr=tripPicked(x),i=arr.indexOf(y);if(i>=0)arr.splice(i,1);else arr.push(y);tripSave();const sy=window.scrollY;renderTrip();window.scrollTo({top:sy});return;}
@@ -2361,7 +2365,7 @@ document.addEventListener('change',e=>{
 });
 
 </script>
-<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 22 nov · 15:25</p>
+<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 22 nov · 15:40</p>
 <script>
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).catch(()=>{});});}
 </script>
