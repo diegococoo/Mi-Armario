@@ -1121,11 +1121,20 @@ const PATS=Object.entries(SH).filter(([k,v])=>v.pat).map(([k,v])=>{
  return `<pattern id="pt-${k}" width="${s}" height="${s}" patternUnits="userSpaceOnUse">${inner}</pattern>`;}).join('');
 document.body.insertAdjacentHTML('afterbegin',`<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>${PATS}<pattern id="pt-quilt" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0,0 H10 M0,0 V10" stroke="#000" stroke-width=".7" opacity=".22"/></pattern><pattern id="pt-puff" width="10" height="11" patternUnits="userSpaceOnUse"><path d="M0,10.5 H10" stroke="#000" stroke-width=".9" opacity=".3"/><path d="M0,3 H10" stroke="#fff" stroke-width="1.4" opacity=".06"/></pattern><pattern id="pt-pique" width="3" height="3" patternUnits="userSpaceOnUse"><circle cx="1.5" cy="1.5" r=".45" fill="#000" opacity=".12"/></pattern><pattern id="pt-lino" width="4" height="4" patternUnits="userSpaceOnUse"><rect width="4" height="4" fill="#fff" opacity="0"/><path d="M0,2 H4" stroke="#000" stroke-width=".35" opacity=".12"/></pattern></defs></svg>`);
 const LSLV=(c)=>`<path d="M52,22 Q30,28 25,60 L18,126 L37,129 L52,72Z" fill="${c}" ${ST}/><path d="M148,22 Q170,28 175,60 L182,126 L163,129 L148,72Z" fill="${c}" ${ST}/>`;
+let TUCKV=null;
 function shirtDraw(c,f,linen){
- const sh=shade(c,-.18);
+ const sh=shade(c,-.18),v=TUCKV;
+ const top='M52,22 L82,14 Q100,26 118,14 L148,22';
+ /* por dentro: el cuerpo se ajusta hasta la cintura del pantalón; por fuera: faldón curvo que tapa la cintura */
+ const body=v==='in'?`${top} L149,66 Q150,104 144,134 L56,134 Q50,104 51,66Z`
+  :v==='out'?`${top} L150,96 L151,146 Q148,160 126,164 Q100,168 74,164 Q52,160 49,146 L50,96Z`
+  :`${top} L150,140 L50,140Z`;
+ const bot=v==='in'?134:v==='out'?166:140;
+ const extra=v==='in'?`<path d="M62,112 Q68,124 63,133 M72,118 Q76,126 74,133 M138,112 Q132,124 137,133 M128,118 Q124,126 126,133" stroke="${sh}" stroke-width=".9" fill="none" opacity=".55"/><path d="M57,100 Q54,118 57,132 M143,100 Q146,118 143,132" stroke="#000" stroke-width="2" fill="none" opacity=".05"/>`
+  :v==='out'?`<path d="M50,146 Q52,158 74,164 Q100,168 126,164 Q148,158 150,146" fill="none" stroke="${sh}" stroke-width="1.6" opacity=".5"/><path d="M50,146 L51,152 M150,146 L149,152" stroke="${sh}" stroke-width="1.2"/><path d="M62,138 Q66,150 61,158 M138,138 Q134,150 139,158" stroke="${sh}" stroke-width=".9" fill="none" opacity=".5"/><circle cx="100" cy="148" r="1.5" fill="${shade(c,-.3)}"/>`:'';
  return `${LSLV(f)}<path d="M18,120 L37,123 L37,129 L18,126Z" fill="${sh}"/><path d="M182,120 L163,123 L163,129 L182,126Z" fill="${sh}"/>
- <path d="M52,22 L82,14 Q100,26 118,14 L148,22 L150,140 L50,140Z" fill="${f}" ${ST}/>${linen?'<path d="M52,22 L82,14 Q100,26 118,14 L148,22 L150,140 L50,140Z" fill="url(#pt-lino)"/>':''}
- <line x1="100" y1="30" x2="100" y2="140" stroke="${sh}" stroke-width="1.4"/>${[48,68,88,108,128].map(y=>`<circle cx="100" cy="${y}" r="1.5" fill="${shade(c,-.3)}"/>`).join('')}
+ <path d="${body}" fill="${f}" ${ST}/>${linen?`<path d="${body}" fill="url(#pt-lino)"/>`:''}${extra}
+ <line x1="100" y1="30" x2="100" y2="${v==='out'?167:bot}" stroke="${sh}" stroke-width="1.4"/>${[48,68,88,108,128].map(y=>`<circle cx="100" cy="${y}" r="1.5" fill="${shade(c,-.3)}"/>`).join('')}
  <path d="M82,14 L100,30 L91,37 L75,19Z" fill="${c}" ${ST}/><path d="M118,14 L100,30 L109,37 L125,19Z" fill="${c}" ${ST}/>`;
 }
 function baseSVG(id){
@@ -1303,7 +1312,9 @@ function figure(o,vars,ghost){
  let s=clipB?`<defs><clipPath id="${fid}b"><rect x="49" y="-16" width="102" height="160"/></clipPath></defs>`:'';
  s+=o.k?sock2(o.k):g('k');
  s+=o.p?pantDraw(o.p):g('p');
+ TUCKV=(o.b&&o.p&&!(has('m')&&o.m)&&topType('b',o.b)==='shirt')?(tuck?'in':'out'):null;
  s+=o.b?(clipB?`<g clip-path="url(#${fid}b)">${baseSVG(o.b)}</g>`:baseSVG(o.b)):g('b');
+ TUCKV=null;
  const clipM=has('c')&&o.c&&o.m&&!['vest','vestp'].includes(info('c',o.c).k);
  if(clipM)s+=`<defs><clipPath id="${fid}m"><rect x="60" y="-16" width="80" height="200"/></clipPath></defs>`;
  if(has('m')){s+=o.m?(clipM?`<g clip-path="url(#${fid}m)">${midSVG(o.m)}</g>`:midSVG(o.m)):g('m');if(o.m&&o.b){s+=peek(o.b,o.m);if(info('b',o.b)&&(topType('b',o.b)==='tee'||(topType('b',o.b)==='polo'&&topType('m',o.m)!=='pshirt')))s+=`<path d="M51,133 L149,133 L149,140 L51,140Z" fill="${info('b',o.b).c}" ${ST}/>`;}}
@@ -1482,15 +1493,27 @@ function scoreOf(o,vars,opts){
    const upF=cloth.filter(x=>x.v!=='p').map(x=>x.f);
    const kset=[kf,...kacc].filter(Boolean);
    const mUp=kset.some(g=>upF.some(f=>eq(f,g))),mSh=!!shoeF&&kset.some(g=>eq(g,shoeF)),mAny=kset.some(g=>cloth.some(x=>eq(x.f,g)));
-   if(mUp&&mSh)add(10,'El calcetín repite un color de la prenda de arriba y del calzado');
-   else if(mUp)add(8,'El calcetín repite un color de la prenda de arriba');
-   else if(mSh)add(8,'El calcetín repite el color del calzado');
+   if(mUp&&mSh)add(14,'El calcetín repite un color de la prenda de arriba y del calzado');
+   else if(mUp)add(11,'El calcetín repite un color de la prenda de arriba');
+   else if(mSh)add(11,'El calcetín repite el color del calzado');
    else if(mAny&&!(has('p')&&eq(kf,famOf('p',o.p))))add(2,'El calcetín solo repite el color del pantalón');
    else if(K2.dress&&has('s')&&shoeFz(o.s)>=3)add(4,'Calcetín fino, va con zapato de vestir');
-   else if(['marino','gris','negro','antracita'].includes(kf))add(-1,'Calcetín discreto, pero no enlaza con la prenda de arriba ni con el calzado');
-   else if(!kBack)add(-6,'El calcetín no combina ni con la prenda de arriba ni con el calzado');
+   else if(['marino','gris','negro','antracita'].includes(kf))add(-3,'Calcetín discreto, pero no enlaza con la prenda de arriba ni con el calzado');
+   else if(!kBack)add(-9,'El calcetín no combina ni con la prenda de arriba ni con el calzado');
   }
-  if(K2.loud){if(accs.length===0)add(3,'Calcetín alegre sobre base sobria');else add(-4,'Calcetín llamativo con mucho color arriba');}
+  if(K2.loud){if(accs.length===0)add(4,'Calcetín alegre sobre base sobria');else add(-6,'Calcetín llamativo con mucho color arriba');}
+  /* dibujitos del calcetín */
+  if(K2.pat&&!K2.exec&&!K2.dress&&!['none','invis','tobill','nikeBl'].includes(o.k)){
+   const eq2=(f,g)=>f&&g&&(f===g||(f==='verde'&&g==='oliva')||(f==='oliva'&&g==='verde'));
+   const dib=(kacc||[]).filter(a=>ACC.has(a)||a==='azulclaro'||a==='crema'||a==='blanco');
+   const dm=dib.filter(a=>cloth.some(x=>x.v!=='p'&&eq2(x.f,a))||(shoeF&&eq2(shoeF,a)));
+   if(dib.length&&dm.length>=2)add(5,'Los dibujitos del calcetín repiten dos colores de tu ropa/calzado');
+   else if(dib.length&&dm.length===1)add(3,'Los dibujitos del calcetín repiten un color de tu ropa/calzado');
+   else if(dib.filter(a=>ACC.has(a)).length&&!dm.length&&!kBack)add(-5,'Los dibujitos de colores del calcetín no enlazan con nada del conjunto');
+   if(K2.cf&&has('s')){const sc2=info('s',o.s).c;if(sc2&&cdist(K2.cf,sc2)<70)add(3,'El puño del calcetín repite el color del calzado');}
+   const upBusy=(has('m')&&NM[o.m]&&(NM[o.m].txt||NM[o.m].back))||(has('b')&&!has('m')&&((SH[o.b]&&SH[o.b].pat)||(info('b',o.b)&&info('b',o.b).back)));
+   if(upBusy&&['motif','big','stripes','logos','argyle'].includes(K2.pat))add(-5,'Dibujos en el calcetín y en la prenda de arriba: se pelean');
+   if(accs.length===0&&['motif','big','stripes','argyle'].includes(K2.pat)&&!K2.loud&&!upBusy)add(2,'Un toque de dibujo en el calcetín alegra una ropa sobria');}
  }
 {const bv=(has('m')&&!has('c')&&info('m',o.m).back)||(has('b')&&!has('m')&&!has('c')&&info('b',o.b)&&info('b',o.b).back);
   if(bv&&bv.big){const pa=has('p')&&ACC.has(famOf('p',o.p)),loud=has('k')&&info('k',o.k).loud;
@@ -2113,7 +2136,7 @@ initStore();
 initAI();
 
 </script>
-<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 22 nov · 13:50</p>
+<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 22 nov · 14:00</p>
 <script>
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).catch(()=>{});});}
 </script>
