@@ -2174,7 +2174,7 @@ initAI();
 
 /* ---------- Modo viaje: tú eliges las prendas y la app te dice qué combina ---------- */
 const TRIPLS='probador-viaje';
-let trip={days:5,wx:['templado'],layer:true,pick:{},showOff:{},tab:'pick',plan:[],checked:{}};
+let trip={days:5,wx:['templado'],layer:true,shoes:2,pick:{},showOff:{},tab:'pick',plan:[],checked:{}};
 try{const v=JSON.parse(localStorage.getItem(TRIPLS)||'null');if(v)trip=Object.assign(trip,v);}catch(e){}
 if(!trip.pick||Array.isArray(trip.pick))trip.pick={};if(!trip.showOff)trip.showOff={};
 if((trip.plan||[]).some(d=>d&&d.vars&&(d.vars.includes('c')||(!!trip.layer)!==d.vars.includes('m'))))trip.plan=[];
@@ -2194,7 +2194,8 @@ function tripCtx(day,fn){
 }
 /* cuántas prendas de cada tipo suelen hacer falta */
 function tripRec(n,cold){
- return {p:n<=2?1:n<=4?2:n<=8?3:4,b:n,m:cold?Math.min(7,Math.ceil(n/2)+1):Math.min(4,Math.ceil(n/3)),s:n<=2?2:3};
+ /* 1 camiseta/polo/camisa y 1 par de calcetines por día; capas que solo repitan 1 día; zapatos: los que quieras llevar (2 o 3) */
+ return {p:n<=2?1:n<=4?2:n<=8?3:4,b:n,m:trip.layer?Math.max(1,n-1):0,s:trip.shoes,k:n};
 }
 const TEMPTY=()=>({p:null,b:null,m:null,c:null,s:null,k:null,w:null});
 
@@ -2225,7 +2226,7 @@ function tripCalc(){
   q.sort((a,b)=>b-a);const top=q.slice(0,Math.max(1,Math.min(trip.days,q.length)));
   const qual=top.length?Math.round(top.reduce((a,x)=>a+x,0)/top.length):null;
   /* la prenda que más subiría la maleta, entre las categorías que aún están cortas */
-  let add=null;core.forEach(v=>{if(pick[v].size>=rec[v])return;Object.entries(scores[v]).forEach(([id,sc])=>{if(!pick[v].has(id)&&tiles[v][id]>0&&(!add||sc>add.s))add={v,id,s:sc};});});
+  let add=null;vars.forEach(v=>{if(rec[v]===undefined||pick[v].size>=rec[v])return;Object.entries(scores[v]).forEach(([id,sc])=>{if(!pick[v].has(id)&&tiles[v][id]>0&&(!add||sc>add.s))add={v,id,s:sc};});});
   return {vars,md,core,pick,tiles,scores,total,rec,qual,add};
  });
 }
@@ -2246,7 +2247,7 @@ function tripDayGen(day,others,prevO,avoidKey){
      const key=okey(as,vars);if(key===avoidKey)return ++c>=6;
      const r=scoreOf(as,vars);if(!r)return ++c>=6;
      let s=r.s+Math.random()*2.5;
-     ['p','b','m','c','s','w'].forEach(v=>{const id=as[v];if(id&&id!=='none'&&use[id])s-=(v==='b'?5:1.5)*use[id];});
+     ['p','b','m','s','k','w'].forEach(v=>{const id=as[v];if(id&&id!=='none'&&use[id])s-=({b:8,k:6,m:5}[v]||1.5)*use[id];});
      if(prevO){if(prevO.p&&prevO.p===as.p&&prevO.s===as.s)s-=5;if(prevO.m&&prevO.m===as.m)s-=3;}
      if(s>bs){bs=s;bsc=r.s;best=Object.assign({},as);}
      return ++c>=6;},true);}
@@ -2262,7 +2263,7 @@ function tripDayGen(day,others,prevO,avoidKey){
 function tripPlan(){
  const n=trip.days,old=trip.plan||[];
  const flags=Array.from({length:n},(_,i)=>({formal:!!(old[i]&&old[i].formal),rain:!!(old[i]&&old[i].rain)}));
- const att=n<=4?8:n<=7?6:4;let best=null,bt=-1e9;
+ const att=n<=4?14:n<=7?10:6;let best=null,bt=-1e9;
  for(let a=0;a<att;a++){
   const days=flags.map(f=>Object.assign({},f,{o:null}));let sum=0,fail=false,rel=0;
   const order=days.map((_,i)=>i).sort((x,y)=>(days[y].formal-days[x].formal)||(days[y].rain-days[x].rain));
@@ -2272,7 +2273,9 @@ function tripPlan(){
    Object.assign(days[i],g);sum+=g.s;rel+=g.relax.length;
   }
   if(fail)continue;
-  const t=sum/n-rel*4;if(t>bt){bt=t;best=days;}
+  /* se prefiere el plan que menos repite: 1 parte de arriba y 1 calcetín por día, y capas con a lo sumo 1 repetición */
+  const rp=v=>{const x=days.map(d=>d.o[v]).filter(id=>id&&id!=='none');return x.length-new Set(x).size;};
+  const t=sum/n-rel*4-rp('b')*6-rp('k')*3-Math.max(0,rp('m')-1)*4;if(t>bt){bt=t;best=days;}
  }
  return best;
 }
@@ -2296,6 +2299,7 @@ function renderTrip(){
  let h=`<div class="vh"><h2>Viaje</h2><p>Elige tú la maleta</p></div>
  <div class="tcfg"><div class="ctxrow"><span>Días</span><span class="tstep"><button type="button" class="mini" data-tp="dm" aria-label="Un día menos">−</button><b>${trip.days}</b><button type="button" class="mini" data-tp="dp" aria-label="Un día más">+</button></span></div>
  <div class="ctxrow"><span>Tiempo</span>${Object.keys(WXN).map(k=>chip0('wx:'+k,WXN[k],trip.wx.includes(k))).join('')}</div>
+ <div class="ctxrow"><span>Zapatos</span>${chip0('sh:2','Llevo 2',trip.shoes===2)}${chip0('sh:3','Llevo 3',trip.shoes===3)}</div>
  <div class="ctxrow"><span>Capa</span>${chip0('ly:1','Con capa',trip.layer)}${chip0('ly:0','Sin capa',!trip.layer)}</div></div>
  <div class="ttabs">${[['pick','Elegir'+(nPick?` (${nPick})`:'')],['plan','Outfits'],['list','Lista']].map(([k,n])=>chip0('tab:'+k,n,trip.tab===k)).join('')}</div>`;
  if(trip.tab==='pick')h+=tripPickHTML();
@@ -2304,20 +2308,24 @@ function renderTrip(){
  el.innerHTML=h;
 }
 function tripVerdict(C,orph){
- const n=trip.days,lab={p:'pantalones',b:'partes de arriba',m:'capas',s:'pares de zapatos'},sing={p:'pantalón',b:'parte de arriba',m:'capa',s:'par de zapatos'};
- const nP=Object.fromEntries(C.core.map(v=>[v,C.pick[v].size])),nTot=C.vars.reduce((a,v)=>a+C.pick[v].size,0);
+ const n=trip.days,lab={p:'pantalones',b:'partes de arriba',m:'capas',s:'pares de zapatos',k:'pares de calcetines'},cats=C.core.concat(C.vars.includes('k')?['k']:[]);
+ const nP=Object.fromEntries(cats.map(v=>[v,C.pick[v].size])),nTot=C.vars.reduce((a,v)=>a+C.pick[v].size,0);
  if(nTot<2||C.qual===null)return null;
- const cov=Math.round(C.core.reduce((a,v)=>a+Math.min(1,nP[v]/C.rec[v]),0)/C.core.length*100);
+ const cov=Math.round(cats.reduce((a,v)=>a+Math.min(1,nP[v]/C.rec[v]),0)/cats.length*100);
  const vari=Math.min(100,Math.round(C.total/(n*4)*100));
  let sc=Math.round(C.qual*.55+cov*.30+vari*.15)-Math.min(15,orph.length*5);
  sc=Math.max(5,Math.min(100,sc));
  const lines=[];
  lines.push(`Los ${Math.min(n,Math.max(1,nTot))>1?'mejores conjuntos':'mejor conjunto'} que salen tienen nota media ${C.qual}.`);
- const gaps=C.core.filter(v=>nP[v]<C.rec[v]);
- if(!gaps.length)lines.push('Cubres bien los días: tienes prendas de sobra de cada tipo.');
+ const gaps=cats.filter(v=>nP[v]<C.rec[v]);
+ if(!gaps.length)lines.push('Cubres bien los días: una parte de arriba y unos calcetines por día, y capas y zapatos para alternar.');
+ if(nP.s>trip.shoes)lines.push(`Llevas ${nP.s} pares de zapatos y querías ${trip.shoes}: quita ${nP.s-trip.shoes} para aligerar.`);
  else gaps.forEach(v=>{const f=C.rec[v]-nP[v];
   if(v==='b')lines.push(nP[v]?`Con ${nP[v]} de ${n} partes de arriba repetirás ${f}: añade ${f} más si puedes.`:'Aún no has elegido partes de arriba.');
   else if(v==='p')lines.push(nP[v]?`Con ${nP[v]} ${nP[v]===1?'pantalón':'pantalones'} repetirás mucho: sugiero ${C.rec[v]}.`:'Aún no has elegido pantalones.');
+  else if(v==='k')lines.push(nP[v]?`Con ${nP[v]} de ${n} pares de calcetines repetirás ${f}: lo ideal es uno al día.`:'Aún no has elegido calcetines (uno al día).');
+  else if(v==='m')lines.push(nP[v]?`Con ${nP[v]} de ${C.rec[v]} capas repetirás más de un día: la idea es repetir solo uno (el de viaje).`:'Aún no has elegido capas.');
+  else if(v==='s')lines.push(nP[v]?`Llevas ${nP[v]} de ${C.rec[v]} pares de zapatos: elige ${C.rec[v]} para poder alternar.`:'Aún no has elegido zapatos.');
   else lines.push(nP[v]?`Pocos ${lab[v]}: sugiero ${C.rec[v]}.`:`Aún no has elegido ${lab[v]}.`);});
  if(C.total<n*2)lines.push(`Solo salen ${C.total} conjuntos distintos: poca variedad.`);
  else if(C.total>=3000)lines.push('Variedad de sobra: salen más de 3.000 conjuntos.');
@@ -2328,10 +2336,10 @@ function tripVerdict(C,orph){
 }
 function tripPickHTML(){
  const C=tripCalc();
- const lab={p:'pantalones',b:'arriba',m:'capas',s:'zapatos'};
- const nP=Object.fromEntries(C.core.map(v=>[v,C.pick[v].size]));
+ const lab={p:'pantalones',b:'arriba',m:'capas',s:'zapatos',k:'calcetines'};
+ const cats=C.core.concat(C.vars.includes('k')?['k']:[]),nP=Object.fromEntries(cats.map(v=>[v,C.pick[v].size]));
  const orph=[];C.vars.forEach(v=>{C.pick[v].forEach(id=>{if(id!=='none'&&!C.tiles[v][id])orph.push([v,id]);});});
- const hints=C.core.map(v=>{const n=nP[v],r=C.rec[v],ok=n>=r;return `<li class="${ok?'ok':n?'mid':'no'}"><b>${n}</b> de ${r} ${lab[v]}${ok?'':n?` · ${r-n===1?'falta 1':'faltan '+(r-n)}`:' · sin elegir'}</li>`;}).join('');
+ const hints=cats.map(v=>{const n=nP[v],r=C.rec[v],ok=n>=r;return `<li class="${ok?'ok':n?'mid':'no'}"><b>${n}</b> de ${r} ${lab[v]}${ok?'':n?` · ${r-n===1?'falta 1':'faltan '+(r-n)}`:' · sin elegir'}</li>`;}).join('');
  const nTot=C.vars.reduce((a,v)=>a+C.pick[v].size,0);
  let h=`<div class="tcfg"><div class="kpis tk"><div class="kpi"><b>${nTot}</b><span>prendas elegidas</span></div><div class="kpi"><b>${C.total>=3000?'+3.000':C.total}</b><span>conjuntos posibles</span></div></div>
  <ul class="thints">${hints}</ul>
@@ -2376,6 +2384,7 @@ document.addEventListener('click',e=>{
  if(a==='dm'){trip.days=Math.max(1,trip.days-1);tripSave();renderTrip();return;}
  if(a==='dp'){trip.days=Math.min(21,trip.days+1);tripSave();renderTrip();return;}
  if(a==='wx'){const i=trip.wx.indexOf(x);if(i>=0)trip.wx.splice(i,1);else trip.wx.push(x);tripSave();renderTrip();return;}
+ if(a==='sh'){trip.shoes=+x;tripSave();renderTrip();return;}
  if(a==='ly'){trip.layer=x==='1';trip.plan=[];tripSave();renderTrip();return;}
  if(a==='tab'){trip.tab=x;tripSave();renderTrip();window.scrollTo({top:0});return;}
  if(a==='off'){trip.showOff[x]=!trip.showOff[x];tripSave();const sy=window.scrollY;renderTrip();window.scrollTo({top:sy});return;}
@@ -2400,7 +2409,7 @@ document.addEventListener('change',e=>{
 });
 
 </script>
-<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 22 nov · 15:55</p>
+<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 22 nov · 16:15</p>
 <script>
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).catch(()=>{});});}
 </script>
