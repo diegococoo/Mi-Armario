@@ -946,6 +946,10 @@ function sockShoe(s,k){
  return true;
 }
 function pantShoe(p,s){
+ if(['oxford','oxfordNeg','mocasin'].includes(s)){
+  const ok=DRESSP.has(p)||(isCU(p)?['cargo','chino','vestir'].includes(CU[p].type):['cMarino','cCamel','cBeige','cCrudo','cAcero','cGris'].includes(p));
+  if(!ok)return false;
+ }
  if(isCU(p)&&['short','lino'].includes(CU[p].pk)){const kind=isCU(s)?CU[s].sk:S[s].k;if(['boot','hi'].includes(kind)||['oxford','oxfordNeg'].includes(s))return false;if(CU[p].pk==='short'){const pf=famOf('p',p),sf=famOf('s',s);return !(pf===sf&&ACC.has(pf));}}
  if(isCU(p)&&CU[p].type==='chino'&&kindOf(s)==='run')return false;
  if(DRESSP.has(p)&&(shoeFz(s)===1||['hi','boot','esp','esploafer','clog','sandal'].includes(kindOf(s))))return false;
@@ -2067,7 +2071,7 @@ initStore();
 initAI();
 
 </script>
-<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 22 nov · 13:40</p>
+<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 22 nov · 13:50</p>
 <script>
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).catch(()=>{});});}
 </script>
