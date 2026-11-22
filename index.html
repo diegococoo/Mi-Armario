@@ -505,7 +505,7 @@ function cTS(t,s){
   const k=SHOEK[s],ty=T[t].t;
   if(FORMAL.has(t))return k!=='run';
   if(ty==='polo')return true;
-  if(ty==='hoodie')return k!=='formal';
+  if(ty==='hoodie')return k!=='formal'||['anteMarron','anteMarino','nauticos'].includes(s);
   return true; /* camisetas y sudaderas: todo */
 }
 const REDS=new Set(['poloBur','poloGant','sudBur']);
@@ -2067,7 +2067,7 @@ initStore();
 initAI();
 
 </script>
-<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 22 nov · 13:30</p>
+<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 22 nov · 13:40</p>
 <script>
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).catch(()=>{});});}
 </script>
