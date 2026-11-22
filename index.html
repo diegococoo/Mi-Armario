@@ -1055,7 +1055,7 @@ function rebuild(){
 function ok(va,a,vb,b){return ORDER.indexOf(va)<ORDER.indexOf(vb)?PM[va+vb][a][b]:PM[vb+va][b][a];}
 function attrs(v,id){const o=info(v,id);return {v,fz:fzOf(v,id),t:(v==='b'||v==='m')?topType(v,id):null,sk:isCU(id)?CU[id].sk:null,pk:isCU(id)?CU[id].pk:null,xmas:v==='k'&&!!(o&&o.xmas),loud:v==='k'&&!!(o&&o.loud)};}
 function allowed(v,id){
- if(wxs.has('lluvia')&&v==='s'&&(isCU(id)?['canvas','sandal','esp','clog','esploafer'].includes(CU[id].sk):(['anteMarron','anteMarino','superga','sl72','spNeg','gazelle','spGris','zueco'].includes(id)||SUMMERSHOE(id))))return false;
+ if(wxs.has('lluvia')&&v==='s'&&(isCU(id)?['canvas','sandal','esp','clog','esploafer'].includes(CU[id].sk):(['superga','zueco'].includes(id)||SUMMERSHOE(id))))return false;
  if(wxs.size&&!wxList().some(w=>WX[w].ok.includes(seasonOf(id))))return false;
  if(wxs.size&&!wxs.has('calor')&&id==='none')return false;
  const at=attrs(v,id);if(occList().some(k=>OCS[k].ban&&OCS[k].ban(at)))return false;
@@ -1520,6 +1520,16 @@ function scoreOf(o,vars,opts){
  /* tiempo */
  if(wxs.has('calor')&&wxs.size===1){const light=cloth.filter(x=>lum(x.c)>.3).length;if(light>=2)add(4,'Colores claros para el calor');
   if(has('p')&&isCU(o.p)&&['short','lino'].includes(CU[o.p].pk))add(4,'Prenda fresca de verano');}
+ if(wxs.has('lluvia')){
+  if(has('p')&&o.p){const lightChino=isCU(o.p)?(CU[o.p].type==='chino'&&lum(info('p',o.p).c)>.55):['cCrudo','cBeige'].includes(o.p);if(lightChino)add(-10,'Chino claro: con lluvia se mancha');}
+  if(has('c')&&has('m')&&o.c&&o.c!=='none'&&o.m){
+   const hoodC=['tnfP','tnfN','hh','parka','napa'].includes(o.c)||(isCU(o.c)&&['tech','anorak','parka'].includes(CU[o.c].k));
+   const tmm=topType('m',o.m);
+   if(!hoodC&&tmm==='hoodie')add(5,'Abrigo sin capucha: la sudadera con capucha te cubre la cabeza');
+   else if(hoodC&&['sweat','polosweat','hzip'].includes(tmm))add(5,'El abrigo ya lleva capucha: mejor sudadera sin capucha');
+   else if(hoodC&&tmm==='hoodie')add(-4,'Dos capuchas juntas: sobran');
+  }
+ }
  if(wxs.has('lluvia')&&has('c')&&o.c&&o.c!=='none'){if(['tnfP','tnfN','hh','napa','parka','gabardina'].includes(o.c)||(isCU(o.c)&&['tech','anorak','parka'].includes(CU[o.c].k)))add(6,'Abrigo que aguanta la lluvia');else add(-4,'Este abrigo no protege bien de la lluvia');}
  if(wxs.has('frio')&&has('c')&&['parka'].includes(isCU(o.c)?CU[o.c].k:CO[o.c].k))add(3,'Bien abrigado para el frío');
  if(!(opts&&opts.noPref))prefTerm(o,vars,add);
@@ -2099,7 +2109,7 @@ initStore();
 initAI();
 
 </script>
-<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 22 nov · 15:00</p>
+<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 22 nov · 15:20</p>
 <script>
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).catch(()=>{});});}
 </script>
