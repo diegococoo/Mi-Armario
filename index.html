@@ -11,7 +11,24 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icon-192.png">
-<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}.mini[aria-pressed="true"]{background:var(--accent);color:var(--paper);border-color:var(--accent)}
+.tcfg{display:flex;flex-direction:column;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px;margin:12px 0}
+.tstep{display:inline-flex;align-items:center;gap:10px}.tstep b{font:800 22px var(--display);min-width:26px;text-align:center}
+.tstep .mini{width:34px;height:30px;font-size:18px;padding:0}
+.tgo{align-self:flex-start;padding:8px 16px;font-size:14px}
+.thint{margin:6px 2px;color:var(--muted);font-size:12.5px}
+.tk{margin:12px 0 4px}.kpi span{display:block;color:var(--muted);font-size:12px}.kpi b{font:800 24px var(--display)}
+.tlist{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px;margin:12px 0 18px}
+.trh2{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:6px 0 8px}.trh2 h3{font-size:18px;font-weight:800;margin:0;flex:1}
+.tgrp h4{font:500 10.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px}
+.trow{display:grid;grid-template-columns:22px 56px 1fr;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.trow.tx{grid-template-columns:22px 1fr}
+.trow input{width:18px;height:18px;accent-color:var(--accent)}
+.trow .tth{width:56px;height:46px;background:var(--stage);border-radius:6px;padding:2px;display:block}
+.trow .tth svg{width:100%;height:100%;display:block}
+.trow .tnm{font-size:14px;line-height:1.25}.trow .tnm small{display:block;color:var(--muted);font:400 11.5px var(--mono)}
+.trow.done .tnm{text-decoration:line-through;opacity:.5}
+</style>
 </head>
 <body>
 <title>Probador del armario</title>
@@ -269,6 +286,7 @@ details[open]{display:flex;flex-direction:column;gap:6px}
     </main>
   </div>
   </section>
+  <section id="v-viaje" class="view" hidden></section>
   <section id="v-fav" class="view" hidden></section>
   <section id="v-hist" class="view" hidden></section>
   <section id="v-stats" class="view" hidden></section>
@@ -1994,7 +2012,7 @@ function backupHTML(){
 }
 
 /* ---------- Render general ---------- */
-const VIEWS=[['probador','Probador'],['fav','Favoritos'],['hist','Historial'],['stats','Estadísticas'],['add','Mi armario']];
+const VIEWS=[['probador','Probador'],['viaje','Viaje'],['fav','Favoritos'],['hist','Historial'],['stats','Estadísticas'],['add','Mi armario']];
 function renderTabs(){
  const ct={fav:Object.keys(store.favs).length,hist:Object.keys(store.hist).length,add:Object.keys(store.custom).length};
  document.getElementById('tabs').innerHTML=VIEWS.map(([k,n])=>`<button type="button" id="tab-${k}" data-view="${k}" aria-pressed="${k===view}">${n}${ct[k]?`<span class="ct">${ct[k]}</span>`:''}</button>`).join('');
@@ -2003,6 +2021,7 @@ function renderTabs(){
 function renderAll(){
  renderTabs();
  if(view==='probador')renderProbador();
+ if(view==='viaje')renderTrip();
  if(view==='fav')renderFav();
  if(view==='hist')renderHist();
  if(view==='stats')renderStats();
@@ -2135,8 +2154,160 @@ renderAll();
 initStore();
 initAI();
 
+
+/* ---------- Modo viaje: maleta cápsula + outfits por días + lista con casillas ---------- */
+const TRIPLS='probador-viaje';
+let trip={days:5,wx:['templado'],maxS:3,plan:[],checked:{}};
+try{const v=JSON.parse(localStorage.getItem(TRIPLS)||'null');if(v)trip=Object.assign(trip,v);}catch(e){}
+const tripSave=()=>{try{localStorage.setItem(TRIPLS,JSON.stringify(trip));}catch(e){}};
+const TGROUPS=[['p','Pantalones'],['b','Camisetas, polos y camisas'],['m','Sudaderas y jerseys'],['c','Abrigos'],['s','Calzado'],['w','Cinturones'],['k','Calcetines']];
+const TEXTRA=[['Ropa interior',d=>d+1],['Pijama',()=>1],['Neceser',()=>1],['Cargador y móvil',()=>1],['Documentación y billetes',()=>1]];
+
+/* ejecuta fn con el tiempo y la ocasión de un día del viaje, y deja todo como estaba */
+function tripCtx(day,fn){
+ const sw=wxs,so=occs,sm=mode;
+ const w=new Set(trip.wx);if(day&&day.rain)w.add('lluvia');
+ wxs=w;occs=new Set(day&&day.formal?['formal']:[]);
+ mode=1;mode=defMode();if(!modesAllowed().includes(mode))mode=modesAllowed()[0];
+ try{return fn(MODES[mode].vars,mode);}finally{wxs=sw;occs=so;mode=sm;}
+}
+function tripLimits(days){
+ const n=days.length,anyF=days.some(d=>d.formal);
+ return {p:(n<=2?1:n<=4?2:n<=8?3:4)+(anyF&&n>=3?1:0),s:trip.maxS,m:Math.min(4,Math.ceil(n/3)),c:1,w:n<=3?1:2};
+}
+const TRELAX=['w','m','c','p','s'];
+/* genera el outfit de un día respetando lo que ya hay en la maleta */
+function tripDayGen(day,others,lim,prevO,avoidKey){
+ return tripCtx(day,(vars,md)=>{
+  const empty={p:null,b:null,m:null,c:null,s:null,k:null,w:null};
+  const chosen={};ORDER.forEach(v=>chosen[v]=new Set());
+  others.forEach(d=>{ORDER.forEach(v=>{if(d.o[v]&&d.o[v]!=='none')chosen[v].add(d.o[v]);});});
+  const usedTops=new Set(others.map(d=>d.o.b).filter(Boolean));
+  const relax=new Set();
+  for(let step=0;step<=TRELAX.length;step++){
+   const d0=baseDoms(vars,null,empty);
+   vars.forEach(v=>{if(lim[v]!==undefined&&chosen[v].size>=lim[v]&&!relax.has(v)){const f=d0[v].filter(id=>chosen[v].has(id));d0[v]=f;}});
+   if(d0.b){const f=d0.b.filter(id=>!usedTops.has(id));if(f.length)d0.b=f;}
+   if(vars.every(v=>d0[v].length)){
+    let best=null,bs=-1e9,bsc=0;
+    for(let i=0;i<14;i++){let c=0;search(vars,d0,as=>{
+     const key=okey(as,vars);if(key===avoidKey)return ++c>=6;
+     const r=scoreOf(as,vars);if(!r)return ++c>=6;
+     let s=r.s+Math.random()*2.5;
+     ['p','s','m','c'].forEach(v=>{if(as[v]&&chosen[v].has(as[v]))s+=1.5;});
+     if(prevO){if(prevO.p&&prevO.p===as.p&&prevO.s===as.s)s-=5;if(prevO.m&&prevO.m===as.m)s-=3;}
+     if(s>bs){bs=s;bsc=r.s;best=Object.assign({},as);}
+     return ++c>=6;},true);}
+    if(best){const o={};ORDER.forEach(v=>o[v]=vars.includes(v)?best[v]:null);return {o,vars:vars.slice(),mode:md,s:bsc,relax:[...relax]};}
+   }
+   const nx=TRELAX.find(v=>vars.includes(v)&&!relax.has(v)&&lim[v]!==undefined&&chosen[v].size>=lim[v]);
+   if(!nx)break;relax.add(nx);
+  }
+  return null;
+ });
+}
+function tripPlan(){
+ const n=trip.days,old=trip.plan||[];
+ const flags=Array.from({length:n},(_,i)=>({formal:!!(old[i]&&old[i].formal),rain:!!(old[i]&&old[i].rain)}));
+ const att=n<=4?10:n<=7?7:5;
+ let best=null,bt=-1e9;
+ for(let a=0;a<att;a++){
+  const days=flags.map(f=>Object.assign({},f,{o:null}));
+  const lim=tripLimits(days);let sum=0,fail=false,rel=0;
+  const order=days.map((_,i)=>i).sort((x,y)=>(days[y].formal-days[x].formal)||(days[y].rain-days[x].rain));
+  for(const i of order){
+   const others=days.filter((d,j)=>j!==i&&d.o);
+   const g=tripDayGen(days[i],others,lim,i>0&&days[i-1].o?days[i-1].o:null,null);
+   if(!g){fail=true;break;}
+   Object.assign(days[i],g);sum+=g.s;rel+=g.relax.length;
+  }
+  if(fail)continue;
+  const t=sum/n-rel*3;
+  if(t>bt){bt=t;best=days;}
+ }
+ return best;
+}
+function tripRows(){
+ const g={};TGROUPS.forEach(([v])=>g[v]=new Map());
+ trip.plan.forEach((d,i)=>{if(!d.o)return;d.vars.forEach(v=>{const id=d.o[v];if(!id||id==='none')return;if(!g[v].has(id))g[v].set(id,[]);g[v].get(id).push(i+1);});});
+ return g;
+}
+function tripCombos(rows){
+ return tripCtx(null,(vars)=>{
+  const empty={p:null,b:null,m:null,c:null,s:null,k:null,w:null};
+  const vs=vars.filter(v=>rows[v]&&rows[v].size);
+  const d0=baseDoms(vs,null,empty);let ok=true;
+  vs.forEach(v=>{d0[v]=d0[v].filter(id=>rows[v].has(id));if(!d0[v].length)ok=false;});
+  if(!ok)return 0;
+  let n=0;search(vs,d0,()=>{n++;return n>=3000;});return n;
+ });
+}
+const tripKeyOf=o=>ORDER.map(v=>o[v]||'0').join('~');
+
+function renderTrip(){
+ const el=document.getElementById('v-viaje');if(!el)return;
+ const chip=(a,n,on)=>`<button type="button" class="chip" data-tp="${a}" aria-pressed="${on}">${n}</button>`;
+ const WXN={calor:'Calor',templado:'Templado',frio:'Frío',lluvia:'Lluvia'};
+ let h=`<div class="vh"><h2>Viaje</h2><p>Maleta, outfits por días y lista</p></div>
+ <div class="tcfg"><div class="ctxrow"><span>Días</span><span class="tstep"><button type="button" class="mini" data-tp="dm" aria-label="Un día menos">−</button><b>${trip.days}</b><button type="button" class="mini" data-tp="dp" aria-label="Un día más">+</button></span></div>
+ <div class="ctxrow"><span>Tiempo</span>${Object.keys(WXN).map(k=>chip('wx:'+k,WXN[k],trip.wx.includes(k))).join('')}</div>
+ <div class="ctxrow"><span>Zapatos</span>${[2,3,4].map(n=>chip('ms:'+n,'Máx. '+n,trip.maxS===n)).join('')}</div>
+ <button type="button" class="mini pri tgo" data-tp="gen">${trip.plan.length?'Rehacer la maleta':'Preparar maleta'}</button>
+ ${trip.plan.length&&trip.plan.length!==trip.days?'<p class="thint">Has cambiado los días: pulsa «Rehacer la maleta» para ajustar el plan.</p>':''}</div>`;
+ if(!trip.plan.length||!trip.plan.every(d=>d&&d.o)){
+  el.innerHTML=h+`<div class="empty-v">Elige días y tiempo y pulsa «Preparar maleta». Te propongo las prendas mínimas, un outfit por día y la lista para ir marcando.</div>`;return;
+ }
+ const rows=tripRows(),nPieces=TGROUPS.reduce((a,[v])=>a+rows[v].size,0);
+ const avg=Math.round(trip.plan.reduce((a,d)=>a+(d.s||0),0)/trip.plan.length);
+ const combos=tripCombos(rows);
+ const cnt=TGROUPS.filter(([v])=>rows[v].size).map(([v,n])=>`${rows[v].size} ${({p:'pantalones',b:'arriba',m:'capas',c:'abrigo',s:'zapatos',w:'cinturón',k:'calcetines'})[v]}`).join(' · ');
+ h+=`<div class="kpis tk"><div class="kpi"><b>${nPieces}</b><span>prendas distintas</span></div><div class="kpi"><b>${avg}</b><span>nota media</span></div><div class="kpi"><b>${combos>=3000?'+3.000':combos}</b><span>conjuntos posibles</span></div></div><p class="thint">${cnt}</p>`;
+ /* lista */
+ let tot=0,done=0;
+ const gh=TGROUPS.filter(([v])=>rows[v].size).map(([v,nm])=>`<div class="tgrp"><h4>${nm}</h4>${[...rows[v].entries()].map(([id,ds])=>{const key=v+':'+id,on=!!trip.checked[key];tot++;if(on)done++;
+  return `<label class="trow${on?' done':''}"><input type="checkbox" data-tpc="${esc2(key)}" ${on?'checked':''}><span class="tth">${thumb[v](id)}</span><span class="tnm">${esc2(info(v,id).n)}<small>${ds.length>1?'Días '+ds.join(', '):'Día '+ds[0]}</small></span></label>`;}).join('')}</div>`).join('');
+ const xh=`<div class="tgrp"><h4>Imprescindibles</h4>${TEXTRA.map(([n,f])=>{const key='x:'+n,on=!!trip.checked[key];tot++;if(on)done++;const q=f(trip.days);return `<label class="trow tx${on?' done':''}"><input type="checkbox" data-tpc="${esc2(key)}" ${on?'checked':''}><span class="tnm">${n}${q>1?` <small>×${q}</small>`:''}</span></label>`;}).join('')}</div>`;
+ h+=`<section class="tlist"><div class="trh2"><h3>Lista de la maleta</h3><span id="tprog" class="cnt">${done} de ${tot}</span><button type="button" class="mini" data-tp="clear">Desmarcar todo</button></div>${gh}${xh}</section>`;
+ /* días */
+ h+=`<div class="trh2"><h3>Día a día</h3></div><div class="cards">${trip.plan.map((d,i)=>{
+  const o=d.o,col=band(d.s)[0];
+  const names=d.vars.filter(v=>o[v]&&o[v]!=='none').map(v=>`<li>${esc2(info(v,o[v]).n)}</li>`).join('');
+  return `<div class="ocard"><div class="f">${figure(o,d.vars,false)}</div><div class="m"><span class="d">Día ${i+1}</span><b style="color:${col}">${d.s}</b><ul>${names}</ul>
+  <div class="row2"><button type="button" class="mini" data-tp="df:${i}" aria-pressed="${!!d.formal}">Formal</button><button type="button" class="mini" data-tp="dr:${i}" aria-pressed="${!!d.rain}">Lluvia</button><button type="button" class="mini" data-tp="dn:${i}">Otro</button><button type="button" class="mini pri" data-tp="dl:${i}">Probar</button></div></div></div>`;}).join('')}</div>`;
+ el.innerHTML=h;
+}
+function tripRegenDay(i){
+ const days=trip.plan,others=days.filter((d,j)=>j!==i&&d.o),lim=tripLimits(days);
+ const g=tripDayGen(days[i],others,lim,i>0&&days[i-1]&&days[i-1].o?days[i-1].o:null,days[i].o?tripKeyOf(days[i].o):null);
+ if(g){Object.assign(days[i],g);tripSave();renderTrip();}else toast('No encuentro otra opción para ese día con esta maleta.');
+}
+document.addEventListener('click',e=>{
+ const b=e.target.closest('[data-tp]');if(!b)return;
+ const [a,x]=b.dataset.tp.split(':');
+ if(a==='dm'){trip.days=Math.max(1,trip.days-1);tripSave();renderTrip();return;}
+ if(a==='dp'){trip.days=Math.min(21,trip.days+1);tripSave();renderTrip();return;}
+ if(a==='wx'){const i=trip.wx.indexOf(x);if(i>=0)trip.wx.splice(i,1);else trip.wx.push(x);tripSave();renderTrip();return;}
+ if(a==='ms'){trip.maxS=+x;tripSave();renderTrip();return;}
+ if(a==='clear'){trip.checked={};tripSave();renderTrip();return;}
+ if(a==='gen'){
+  b.disabled=true;b.textContent='Preparando…';
+  setTimeout(()=>{const p=tripPlan();if(!p){toast('No he podido montar una maleta con esos datos. Prueba con otro tiempo.');}else{trip.plan=p;trip.checked={};tripSave();}renderTrip();},30);return;}
+ if(a==='df'||a==='dr'){const i=+x,d=trip.plan[i];if(!d)return;if(a==='df')d.formal=!d.formal;else d.rain=!d.rain;tripRegenDay(i);return;}
+ if(a==='dn'){tripRegenDay(+x);return;}
+ if(a==='dl'){const d=trip.plan[+x];if(!d)return;wxs.clear();occs.clear();mode=d.mode;sel={p:null,b:null,m:null,c:null,s:null,k:null,w:null};
+  Object.keys(d.o).forEach(v=>{const id=d.o[v];if(id&&DOM[v]&&DOM[v].includes(id))sel[v]=id;});
+  view='probador';save();renderAll();window.scrollTo({top:0});}
+});
+document.addEventListener('change',e=>{
+ const c=e.target.closest('[data-tpc]');if(!c)return;
+ trip.checked[c.dataset.tpc]=c.checked;tripSave();
+ const row=c.closest('.trow');if(row)row.classList.toggle('done',c.checked);
+ const all=[...document.querySelectorAll('#v-viaje [data-tpc]')],p=document.getElementById('tprog');
+ if(p)p.textContent=`${all.filter(x=>x.checked).length} de ${all.length}`;
+});
+
 </script>
-<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 22 nov · 14:00</p>
+<p class="ver" style="text-align:center;font:400 11px ui-monospace,monospace;color:#8A90A0;margin:8px 0 24px">Versión 22 nov · 14:30</p>
 <script>
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).catch(()=>{});});}
 </script>
